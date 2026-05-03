@@ -133,6 +133,7 @@ A native macOS SwiftUI app organized as a **layered, protocol-driven** monolith.
 
 | Screen | Purpose |
 |---|---|
+| **First-run Onboarding** | One-time guided wizard: checks Ollama is installed and running, pulls the default LLM model with progress bar, downloads the Whisper model file, requests microphone permission, lets the user pick a default voice. ~90 seconds happy path. |
 | **Practice (home)** | Library of scenario cards + "Custom Scenario" free-text box. Mode toggle (Flow / Coach). Banner area for setup issues (Ollama not running, etc.). |
 | **Live Session** | Distraction-free. Persona name + 1-line context, mic button (push-to-talk + VAD), live transcript, replay-last. |
 | **Debrief** | 1-line summary, transcript with inline highlights, key metrics card, "new weak spots" + "recurring weak spots" sections. |
