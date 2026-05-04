@@ -59,3 +59,28 @@ import Foundation
         #expect(SessionStatus.abandoned.rawValue == "abandoned")
     }
 }
+
+@Suite struct TurnTests {
+    @Test func codableRoundTrip() throws {
+        let turn = Turn(
+            id: UUID(),
+            sessionId: UUID(),
+            turnIndex: 0,
+            speaker: .user,
+            text: "Hi, I'd like to discuss my Q2 goals.",
+            audioPath: "audio/abcd/user-turn-001.wav",
+            startedAt: Date(timeIntervalSince1970: 1_777_000_000),
+            durationMs: 4200,
+            metricsJson: nil,
+            isComplete: true
+        )
+        let data = try JSONEncoder().encode(turn)
+        let decoded = try JSONDecoder().decode(Turn.self, from: data)
+        #expect(turn == decoded)
+    }
+
+    @Test func speakerRawValues() {
+        #expect(Speaker.user.rawValue == "user")
+        #expect(Speaker.ai.rawValue == "ai")
+    }
+}
