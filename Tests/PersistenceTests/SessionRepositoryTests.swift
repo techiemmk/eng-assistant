@@ -50,13 +50,13 @@ import Core
         #expect(fetched?.summary == "Discussed Q2 goals.")
     }
 
-    @Test func findOrphanedReturnsActiveOnly() throws {
+    @Test func listActiveReturnsActiveSessionsOnly() throws {
         let (repo, _) = try Self.makeRepo()
         let active = Self.makeSession(status: .active)
         let ended = Self.makeSession(id: UUID(), status: .ended, ended: Date())
         try repo.create(active)
         try repo.create(ended)
-        let orphans = try repo.findOrphaned()
+        let orphans = try repo.listActive()
         #expect(orphans.count == 1)
         #expect(orphans.first?.id == active.id)
     }

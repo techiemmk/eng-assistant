@@ -47,7 +47,11 @@ public final class SessionRepository {
         }
     }
 
-    public func findOrphaned() throws -> [Session] {
+    /// Returns all sessions still in `.active` status. These are *candidates* for
+    /// orphan recovery on app launch (they correspond to sessions that didn't
+    /// finalize cleanly). Call this **before** creating a new session — otherwise
+    /// the in-progress session will be returned alongside true orphans.
+    public func listActive() throws -> [Session] {
         try database.queue.read { db in
             try Row.fetchAll(db, sql: "SELECT * FROM sessions WHERE status = 'active'")
                 .map { try Self.session(from: $0) }
