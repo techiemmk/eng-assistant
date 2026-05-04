@@ -1042,8 +1042,9 @@ import Testing
     }
 
     @Test func dropsOldestUserAssistantPairWhenOverBudget() {
-        // System + 3 turn-pairs of 100 chars each = 600 chars body. Budget 350 → drop one pair.
-        var history = ChatHistory(systemPrompt: "system", maxCharacterBudget: 350)
+        // Each message is 101 chars (100 'x' + 1 digit). 6 messages = 606. Budget 450.
+        // Drop one pair (202 chars) → 404, which is ≤ 450, loop stops.
+        var history = ChatHistory(systemPrompt: "system", maxCharacterBudget: 450)
         let big = String(repeating: "x", count: 100)
         history.append(role: .user, content: big + "1")
         history.append(role: .assistant, content: big + "1")
