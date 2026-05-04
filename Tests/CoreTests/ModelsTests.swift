@@ -27,3 +27,35 @@ import Foundation
         #expect(ScenarioDomain.allCases.contains(.social))
     }
 }
+
+@Suite struct SessionTests {
+    @Test func codableRoundTrip() throws {
+        let id = UUID()
+        let scenarioId = "work-standup-01"
+        let started = Date(timeIntervalSince1970: 1_777_000_000)
+        let session = Session(
+            id: id,
+            scenarioId: scenarioId,
+            startedAt: started,
+            endedAt: nil,
+            mode: .flow,
+            status: .active,
+            summary: nil,
+            personaSnapshot: "A no-nonsense engineering manager."
+        )
+        let data = try JSONEncoder().encode(session)
+        let decoded = try JSONDecoder().decode(Session.self, from: data)
+        #expect(session == decoded)
+    }
+
+    @Test func modeRawValues() {
+        #expect(SessionMode.flow.rawValue == "flow")
+        #expect(SessionMode.coach.rawValue == "coach")
+    }
+
+    @Test func statusRawValues() {
+        #expect(SessionStatus.active.rawValue == "active")
+        #expect(SessionStatus.ended.rawValue == "ended")
+        #expect(SessionStatus.abandoned.rawValue == "abandoned")
+    }
+}
