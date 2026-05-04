@@ -39,7 +39,7 @@ public final class ScenarioRepository {
             guard let row = try Row.fetchOne(db, sql: "SELECT * FROM scenarios WHERE id = ?", arguments: [id]) else {
                 return nil
             }
-            return Self.scenario(from: row, decoder: decoder)
+            return try Self.scenario(from: row, decoder: decoder)
         }
     }
 
@@ -47,7 +47,7 @@ public final class ScenarioRepository {
         let decoder = self.decoder
         return try database.queue.read { db in
             try Row.fetchAll(db, sql: "SELECT * FROM scenarios WHERE source = 'custom' ORDER BY title")
-                .map { Self.scenario(from: $0, decoder: decoder) }
+                .map { try Self.scenario(from: $0, decoder: decoder) }
         }
     }
 
@@ -57,14 +57,22 @@ public final class ScenarioRepository {
         }
     }
 
-    private static func scenario(from row: Row, decoder: JSONDecoder) -> Scenario {
+    private static func scenario(from row: Row, decoder: JSONDecoder) throws -> Scenario {
         let tagsJson: String = row["tags_json"]
         let tags = (try? decoder.decode([String].self, from: Data(tagsJson.utf8))) ?? []
+        let sourceStr: String = row["source"]
+        guard let source = ScenarioSource(rawValue: sourceStr) else {
+            throw PersistenceDecodingError.malformedField(table: "scenarios", column: "source", value: sourceStr)
+        }
+        let domainStr: String = row["domain"]
+        guard let domain = ScenarioDomain(rawValue: domainStr) else {
+            throw PersistenceDecodingError.malformedField(table: "scenarios", column: "domain", value: domainStr)
+        }
         return Scenario(
             id: row["id"],
-            source: ScenarioSource(rawValue: row["source"])!,
+            source: source,
             title: row["title"],
-            domain: ScenarioDomain(rawValue: row["domain"])!,
+            domain: domain,
             persona: row["persona"],
             openingLine: row["opening_line"],
             difficulty: row["difficulty"],

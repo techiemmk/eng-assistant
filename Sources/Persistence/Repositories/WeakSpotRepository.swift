@@ -39,7 +39,7 @@ public final class WeakSpotRepository {
                                              arguments: [pattern]) else {
                 return nil
             }
-            return Self.weakSpot(from: row, decoder: decoder)
+            return try Self.weakSpot(from: row, decoder: decoder)
         }
     }
 
@@ -51,7 +51,7 @@ public final class WeakSpotRepository {
                                              arguments: [id.uuidString]) else {
                 throw WeakSpotRepositoryError.notFound(id)
             }
-            let existing = Self.weakSpot(from: row, decoder: decoder)
+            let existing = try Self.weakSpot(from: row, decoder: decoder)
             var ids = existing.exampleTurnIds
             if let newId = addExampleTurnId, !ids.contains(newId) {
                 ids.append(newId)
@@ -74,7 +74,7 @@ public final class WeakSpotRepository {
                 ORDER BY occurrence_count DESC, last_seen DESC
                 LIMIT ?
                 """, arguments: [limit])
-                .map { Self.weakSpot(from: $0, decoder: decoder) }
+                .map { try Self.weakSpot(from: $0, decoder: decoder) }
         }
     }
 
@@ -85,18 +85,30 @@ public final class WeakSpotRepository {
         }
     }
 
-    private static func weakSpot(from row: Row, decoder: JSONDecoder) -> WeakSpot {
+    private static func weakSpot(from row: Row, decoder: JSONDecoder) throws -> WeakSpot {
         let json: String = row["example_turn_ids_json"]
         let stringIds = (try? decoder.decode([String].self, from: Data(json.utf8))) ?? []
         let ids = stringIds.compactMap { UUID(uuidString: $0) }
+        let idStr: String = row["id"]
+        guard let id = UUID(uuidString: idStr) else {
+            throw PersistenceDecodingError.malformedField(table: "weak_spots", column: "id", value: idStr)
+        }
+        let categoryStr: String = row["category"]
+        guard let category = WeakSpotCategory(rawValue: categoryStr) else {
+            throw PersistenceDecodingError.malformedField(table: "weak_spots", column: "category", value: categoryStr)
+        }
+        let statusStr: String = row["status"]
+        guard let status = WeakSpotStatus(rawValue: statusStr) else {
+            throw PersistenceDecodingError.malformedField(table: "weak_spots", column: "status", value: statusStr)
+        }
         return WeakSpot(
-            id: UUID(uuidString: row["id"])!,
+            id: id,
             pattern: row["pattern"],
-            category: WeakSpotCategory(rawValue: row["category"])!,
+            category: category,
             firstSeen: row["first_seen"],
             lastSeen: row["last_seen"],
             occurrenceCount: row["occurrence_count"],
-            status: WeakSpotStatus(rawValue: row["status"])!,
+            status: status,
             exampleTurnIds: ids
         )
     }

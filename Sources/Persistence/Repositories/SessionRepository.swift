@@ -29,8 +29,10 @@ public final class SessionRepository {
 
     public func find(id: UUID) throws -> Session? {
         try database.queue.read { db in
-            let row = try Row.fetchOne(db, sql: "SELECT * FROM sessions WHERE id = ?", arguments: [id.uuidString])
-            return row.map(Self.session(from:))
+            guard let row = try Row.fetchOne(db, sql: "SELECT * FROM sessions WHERE id = ?", arguments: [id.uuidString]) else {
+                return nil
+            }
+            return try Self.session(from: row)
         }
     }
 
@@ -41,14 +43,14 @@ public final class SessionRepository {
                 WHERE started_at >= ? AND started_at < ?
                 ORDER BY started_at DESC
                 """, arguments: [from, to])
-                .map(Self.session(from:))
+                .map { try Self.session(from: $0) }
         }
     }
 
     public func findOrphaned() throws -> [Session] {
         try database.queue.read { db in
             try Row.fetchAll(db, sql: "SELECT * FROM sessions WHERE status = 'active'")
-                .map(Self.session(from:))
+                .map { try Self.session(from: $0) }
         }
     }
 
@@ -67,14 +69,26 @@ public final class SessionRepository {
         }
     }
 
-    private static func session(from row: Row) -> Session {
-        Session(
-            id: UUID(uuidString: row["id"])!,
+    private static func session(from row: Row) throws -> Session {
+        let idStr: String = row["id"]
+        guard let id = UUID(uuidString: idStr) else {
+            throw PersistenceDecodingError.malformedField(table: "sessions", column: "id", value: idStr)
+        }
+        let modeStr: String = row["mode"]
+        guard let mode = SessionMode(rawValue: modeStr) else {
+            throw PersistenceDecodingError.malformedField(table: "sessions", column: "mode", value: modeStr)
+        }
+        let statusStr: String = row["status"]
+        guard let status = SessionStatus(rawValue: statusStr) else {
+            throw PersistenceDecodingError.malformedField(table: "sessions", column: "status", value: statusStr)
+        }
+        return Session(
+            id: id,
             scenarioId: row["scenario_id"],
             startedAt: row["started_at"],
             endedAt: row["ended_at"],
-            mode: SessionMode(rawValue: row["mode"])!,
-            status: SessionStatus(rawValue: row["status"])!,
+            mode: mode,
+            status: status,
             summary: row["summary"],
             personaSnapshot: row["persona_snapshot"]
         )

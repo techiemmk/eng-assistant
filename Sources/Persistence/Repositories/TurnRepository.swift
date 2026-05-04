@@ -35,7 +35,7 @@ public final class TurnRepository {
             try Row.fetchAll(db, sql: """
                 SELECT * FROM turns WHERE session_id = ? ORDER BY turn_index ASC
                 """, arguments: [sessionId.uuidString])
-                .map(Self.turn(from:))
+                .map { try Self.turn(from: $0) }
         }
     }
 
@@ -44,7 +44,7 @@ public final class TurnRepository {
             try Row.fetchAll(db, sql: """
                 SELECT * FROM turns WHERE session_id = ? AND is_complete = 0 ORDER BY turn_index ASC
                 """, arguments: [sessionId.uuidString])
-                .map(Self.turn(from:))
+                .map { try Self.turn(from: $0) }
         }
     }
 
@@ -62,12 +62,24 @@ public final class TurnRepository {
         }
     }
 
-    private static func turn(from row: Row) -> Turn {
-        Turn(
-            id: UUID(uuidString: row["id"])!,
-            sessionId: UUID(uuidString: row["session_id"])!,
+    private static func turn(from row: Row) throws -> Turn {
+        let idStr: String = row["id"]
+        guard let id = UUID(uuidString: idStr) else {
+            throw PersistenceDecodingError.malformedField(table: "turns", column: "id", value: idStr)
+        }
+        let sessionIdStr: String = row["session_id"]
+        guard let sessionId = UUID(uuidString: sessionIdStr) else {
+            throw PersistenceDecodingError.malformedField(table: "turns", column: "session_id", value: sessionIdStr)
+        }
+        let speakerStr: String = row["speaker"]
+        guard let speaker = Speaker(rawValue: speakerStr) else {
+            throw PersistenceDecodingError.malformedField(table: "turns", column: "speaker", value: speakerStr)
+        }
+        return Turn(
+            id: id,
+            sessionId: sessionId,
             turnIndex: row["turn_index"],
-            speaker: Speaker(rawValue: row["speaker"])!,
+            speaker: speaker,
             text: row["text"],
             audioPath: row["audio_path"],
             startedAt: row["started_at"],
