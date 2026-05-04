@@ -106,3 +106,43 @@ import Foundation
         #expect(WeakSpotCategory.allCases.count == 4)
     }
 }
+
+@Suite struct MetricsTests {
+    @Test func turnMetricsCodableRoundTrip() throws {
+        let m = TurnMetrics(
+            wordsPerMinute: 132.5,
+            pauseRatio: 0.18,
+            fillerCount: 4,
+            uniqueWordRatio: 0.72,
+            grammarIssueCount: 1
+        )
+        let data = try JSONEncoder().encode(m)
+        let decoded = try JSONDecoder().decode(TurnMetrics.self, from: data)
+        #expect(m == decoded)
+    }
+
+    @Test func dailyMetricsCodableRoundTrip() throws {
+        let m = DailyMetrics(
+            date: "2026-05-04",
+            totalMinutes: 22,
+            sessionsCount: 2,
+            avgFluency: 130.0,
+            avgVocabRange: 0.7,
+            avgFillerDensity: 0.05,
+            avgGrammarSlipsPerMin: 0.5
+        )
+        let data = try JSONEncoder().encode(m)
+        let decoded = try JSONDecoder().decode(DailyMetrics.self, from: data)
+        #expect(m == decoded)
+    }
+}
+
+@Suite struct AppSettingsKeyTests {
+    @Test func knownKeysPresent() {
+        #expect(AppSettingKey.defaultMode.rawValue == "default_mode")
+        #expect(AppSettingKey.audioRetentionDays.rawValue == "audio_retention_days")
+        #expect(AppSettingKey.vadSensitivity.rawValue == "vad_sensitivity")
+        #expect(AppSettingKey.llmModelName.rawValue == "llm_model_name")
+        #expect(AppSettingKey.ttsVoiceName.rawValue == "tts_voice_name")
+    }
+}
