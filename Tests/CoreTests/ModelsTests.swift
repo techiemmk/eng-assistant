@@ -84,3 +84,25 @@ import Foundation
         #expect(Speaker.ai.rawValue == "ai")
     }
 }
+
+@Suite struct WeakSpotTests {
+    @Test func codableRoundTrip() throws {
+        let ws = WeakSpot(
+            id: UUID(),
+            pattern: "uses 'more better' instead of 'better'",
+            category: .grammar,
+            firstSeen: Date(timeIntervalSince1970: 1_777_000_000),
+            lastSeen: Date(timeIntervalSince1970: 1_777_005_000),
+            occurrenceCount: 3,
+            status: .active,
+            exampleTurnIds: [UUID(), UUID()]
+        )
+        let data = try JSONEncoder().encode(ws)
+        let decoded = try JSONDecoder().decode(WeakSpot.self, from: data)
+        #expect(ws == decoded)
+    }
+
+    @Test func categoryCases() {
+        #expect(WeakSpotCategory.allCases.count == 4)
+    }
+}
