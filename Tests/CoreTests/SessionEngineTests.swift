@@ -27,6 +27,9 @@ final class InMemoryTurnPersister: TurnPersisting, @unchecked Sendable {
     func markIncomplete(id: UUID) throws {
         if let i = turns.firstIndex(where: { $0.id == id }) { turns[i].isComplete = false }
     }
+    func updateMetricsJson(turnId: UUID, json: String) throws {
+        if let i = turns.firstIndex(where: { $0.id == turnId }) { turns[i].metricsJson = json }
+    }
 }
 
 @Suite struct SessionEngineTests {
