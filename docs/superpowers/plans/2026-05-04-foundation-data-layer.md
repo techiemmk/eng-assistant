@@ -27,6 +27,8 @@
 
 The implementer subagents will be dispatched with task text where this conversion has already been applied.
 
+**Test runner:** This environment has Apple Command Line Tools but not full Xcode. SwiftPM can't auto-discover the Swift Testing framework with CLT alone, so the project includes `bin/test.sh` — a tiny wrapper that runs `swift test` with the framework search paths injected. **Use `bin/test.sh` everywhere this plan says `swift test`.** When Xcode is installed later, the wrapper becomes redundant and can be deleted.
+
 ---
 
 ## File Structure
