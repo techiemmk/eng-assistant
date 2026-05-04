@@ -16,8 +16,8 @@ public final class ScenarioRepository {
         try database.queue.write { db in
             try db.execute(sql: """
                 INSERT INTO scenarios (id, source, title, domain, persona, opening_line,
-                                       difficulty, tags_json, notes, is_user_created)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       difficulty, tags_json, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, arguments: [
                 scenario.id,
                 scenario.source.rawValue,
@@ -28,7 +28,6 @@ public final class ScenarioRepository {
                 scenario.difficulty,
                 tagsJson,
                 scenario.notes,
-                scenario.source == .custom,
             ])
         }
     }

@@ -16,7 +16,6 @@ public enum Migrations {
                 t.column("difficulty", .integer).notNull()
                 t.column("tags_json", .text).notNull()    // JSON array
                 t.column("notes", .text)
-                t.column("is_user_created", .boolean).notNull().defaults(to: false)
             }
 
             try db.create(table: "sessions") { t in
