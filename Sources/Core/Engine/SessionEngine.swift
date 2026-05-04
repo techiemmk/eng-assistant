@@ -15,9 +15,16 @@ public actor SessionEngine {
     private let sessionPersister: SessionPersisting
     private let turnPersister: TurnPersisting
 
-    private var sessionId: UUID?
-    private var nextTurnIndex: Int = 0
-    private var history: ChatHistory?
+    /// Active-session state. `nil` before `start()` and after no session has been
+    /// initialized; non-`nil` once `start()` succeeds. Bundling sessionId, history,
+    /// and turn index together means a single guard establishes "session in flight"
+    /// and the body never has to force-unwrap individual fields.
+    private struct ActiveState {
+        var sessionId: UUID
+        var history: ChatHistory
+        var nextTurnIndex: Int
+    }
+    private var state: ActiveState?
 
     public static let defaultHistoryBudget = 12_000  // characters; ~3000 tokens at ~4 chars/token
 
@@ -49,11 +56,8 @@ public actor SessionEngine {
         self.llmOptions = llmOptions
     }
 
-    /// Creates the session row, sets up the chat history with the system prompt,
-    /// speaks and persists the opening line as an AI turn.
     public func start() async throws {
         let id = UUID()
-        sessionId = id
         let now = Date()
         let session = Session(
             id: id,
@@ -72,36 +76,69 @@ public actor SessionEngine {
             mode: mode,
             activeWeakSpots: activeWeakSpots
         )
-        history = ChatHistory(systemPrompt: systemPrompt, maxCharacterBudget: Self.defaultHistoryBudget)
+        state = ActiveState(
+            sessionId: id,
+            history: ChatHistory(systemPrompt: systemPrompt, maxCharacterBudget: Self.defaultHistoryBudget),
+            nextTurnIndex: 0
+        )
 
         try await speakAndPersistOpeningLine(text: scenario.openingLine)
     }
 
-    /// Runs one full turn: capture user audio, transcribe, persist user turn,
-    /// call LLM, parse markers, speak the spoken portion, persist AI turn.
-    /// Returns any corrections extracted from the AI's reply.
+    /// Runs one full turn. Atomicity contract: if the LLM (or any step after the
+    /// user turn is persisted) throws, the user turn is marked incomplete and
+    /// the in-memory `ChatHistory` is NOT updated, so the next turn doesn't
+    /// resend a half-broken history to the model.
     @discardableResult
     public func runUserTurn() async throws -> [Correction] {
-        guard sessionId != nil, history != nil else {
-            throw SessionEngineError.notStarted
-        }
+        guard var current = state else { throw SessionEngineError.notStarted }
 
         try await audioCapture.startRecording()
         let audio = try await audioCapture.stopRecording()
         let userStart = Date()
         let transcript = try await stt.transcribe(audio: audio)
 
-        try persistUserTurn(text: transcript.text, audioByteCount: audio.count, startedAt: userStart)
-        history!.append(role: .user, content: transcript.text)
+        let userTurnId = UUID()
+        let userTurn = Turn(
+            id: userTurnId,
+            sessionId: current.sessionId,
+            turnIndex: current.nextTurnIndex,
+            speaker: .user,
+            text: transcript.text,
+            audioPath: nil,
+            startedAt: userStart,
+            durationMs: 0,
+            metricsJson: nil,
+            isComplete: true
+        )
+        try turnPersister.append(userTurn)
+        current.nextTurnIndex += 1
+        state = current
+
+        // Build the prompt history WITHOUT mutating `state.history` yet — we only
+        // commit to history if the LLM call succeeds end-to-end.
+        var pendingHistory = current.history
+        pendingHistory.append(role: .user, content: transcript.text)
 
         let aiStart = Date()
-        let stream = try await llm.respond(messages: history!.messages(), options: llmOptions)
-        var fullReply = ""
-        for try await chunk in stream {
-            fullReply += chunk
+        let fullReply: String
+        do {
+            let stream = try await llm.respond(messages: pendingHistory.messages(), options: llmOptions)
+            var collected = ""
+            for try await chunk in stream {
+                collected += chunk
+            }
+            fullReply = collected
+        } catch {
+            // LLM failed — preserve the user turn as incomplete so the UI can show
+            // "reply failed — retry?" without losing what the user said. History
+            // stays unchanged so a retry doesn't double-send the user message.
+            try? turnPersister.markIncomplete(id: userTurnId)
+            throw error
         }
+
         let parsed = CoachMarkerParser.parse(fullReply)
-        history!.append(role: .assistant, content: fullReply)
+        pendingHistory.append(role: .assistant, content: fullReply)
 
         try await speakAndPersistAIReply(
             spokenText: parsed.spokenText,
@@ -109,19 +146,24 @@ public actor SessionEngine {
             startedAt: aiStart
         )
 
+        // Both turns succeeded — commit history.
+        if var committed = state {
+            committed.history = pendingHistory
+            state = committed
+        }
+
         return parsed.corrections
     }
 
-    /// Finalizes the session row.
     public func end(summary: String?) async throws {
-        guard let id = sessionId else { throw SessionEngineError.notStarted }
-        try sessionPersister.finalize(id: id, endedAt: Date(), summary: summary)
+        guard let current = state else { throw SessionEngineError.notStarted }
+        try sessionPersister.finalize(id: current.sessionId, endedAt: Date(), summary: summary)
     }
 
-    // Test helpers — visible to tests via direct call.
+    // Test helpers
     public func sessionForTesting() throws -> Session? {
-        guard let id = sessionId else { return nil }
-        return try sessionPersister.find(id: id)
+        guard let current = state else { return nil }
+        return try sessionPersister.find(id: current.sessionId)
     }
 
     public func llmForTesting() -> LLMProvider {
@@ -131,58 +173,53 @@ public actor SessionEngine {
     // MARK: - private
 
     private func speakAndPersistOpeningLine(text: String) async throws {
-        let start = Date()
-        let audio = try await tts.synthesize(text: text, voice: voice)
-        try await audioPlayback.play(audio)
-        let elapsed = Int(Date().timeIntervalSince(start) * 1000)
-        try persistAITurn(text: text, durationMs: elapsed, startedAt: start)
-        // The opening line is spoken directly from scenario.openingLine, not generated
-        // by the LLM, so it must NOT be added to ChatHistory as an assistant turn —
-        // doing so would mislead the model into thinking it had said something it didn't.
-    }
-
-    private func speakAndPersistAIReply(spokenText: String, originalText: String, startedAt: Date) async throws {
+        guard var current = state else { throw SessionEngineError.notStarted }
         let synthStart = Date()
-        let audio = try await tts.synthesize(text: spokenText, voice: voice)
+        let audio = try await tts.synthesize(text: text, voice: voice)
+        let playStart = Date()
         try await audioPlayback.play(audio)
-        let elapsed = Int(Date().timeIntervalSince(synthStart) * 1000)
-        try persistAITurn(text: originalText, durationMs: elapsed, startedAt: startedAt)
-    }
+        let elapsedPlayback = Int(Date().timeIntervalSince(playStart) * 1000)
 
-    private func persistAITurn(text: String, durationMs: Int, startedAt: Date) throws {
-        guard let id = sessionId else { throw SessionEngineError.notStarted }
         let turn = Turn(
             id: UUID(),
-            sessionId: id,
-            turnIndex: nextTurnIndex,
+            sessionId: current.sessionId,
+            turnIndex: current.nextTurnIndex,
             speaker: .ai,
             text: text,
             audioPath: nil,
-            startedAt: startedAt,
-            durationMs: durationMs,
+            startedAt: synthStart,
+            durationMs: elapsedPlayback,
             metricsJson: nil,
             isComplete: true
         )
         try turnPersister.append(turn)
-        nextTurnIndex += 1
+        current.nextTurnIndex += 1
+        state = current
+        // Opening line is NOT injected into history — the LLM didn't author it.
     }
 
-    private func persistUserTurn(text: String, audioByteCount: Int, startedAt: Date) throws {
-        guard let id = sessionId else { throw SessionEngineError.notStarted }
+    private func speakAndPersistAIReply(spokenText: String, originalText: String, startedAt: Date) async throws {
+        guard var current = state else { throw SessionEngineError.notStarted }
+        let audio = try await tts.synthesize(text: spokenText, voice: voice)
+        let playStart = Date()
+        try await audioPlayback.play(audio)
+        let elapsedPlayback = Int(Date().timeIntervalSince(playStart) * 1000)
+
         let turn = Turn(
             id: UUID(),
-            sessionId: id,
-            turnIndex: nextTurnIndex,
-            speaker: .user,
-            text: text,
-            audioPath: nil,    // wiring to disk audio happens in Plan 5
+            sessionId: current.sessionId,
+            turnIndex: current.nextTurnIndex,
+            speaker: .ai,
+            text: originalText,
+            audioPath: nil,
             startedAt: startedAt,
-            durationMs: 0,     // user-turn duration arrives in Plan 5
+            durationMs: elapsedPlayback,
             metricsJson: nil,
             isComplete: true
         )
         try turnPersister.append(turn)
-        nextTurnIndex += 1
+        current.nextTurnIndex += 1
+        state = current
     }
 }
 

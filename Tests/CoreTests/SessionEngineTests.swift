@@ -27,9 +27,6 @@ final class InMemoryTurnPersister: TurnPersisting, @unchecked Sendable {
     func markIncomplete(id: UUID) throws {
         if let i = turns.firstIndex(where: { $0.id == id }) { turns[i].isComplete = false }
     }
-    func updateMetricsJson(turnId: UUID, json: String) throws {
-        if let i = turns.firstIndex(where: { $0.id == turnId }) { turns[i].metricsJson = json }
-    }
 }
 
 @Suite struct SessionEngineTests {
@@ -134,6 +131,46 @@ final class InMemoryTurnPersister: TurnPersisting, @unchecked Sendable {
         #expect(session.status == .ended)
         #expect(session.summary == "Test session.")
         #expect(session.endedAt != nil)
+    }
+
+    @Test func llmFailureMarksUserTurnIncompleteAndKeepsHistoryClean() async throws {
+        // Throwing fake LLM that fails on first call.
+        struct ThrowingLLM: LLMProvider {
+            func respond(messages: [ChatMessage], options: LLMOptions) async throws -> AsyncThrowingStream<String, Error> {
+                throw NSError(domain: "test", code: 1, userInfo: nil)
+            }
+        }
+        let sessionPersister = InMemorySessionPersister()
+        let turnPersister = InMemoryTurnPersister()
+        let stt = FakeSTTProvider(scriptedTexts: ["hi there"])
+        let tts = FakeTTSProvider()
+        let capture = FakeAudioCapture(scriptedClipByteCounts: [100])
+        let playback = FakeAudioPlayback()
+        let engine = SessionEngine(
+            scenario: Self.scenario,
+            mode: .flow,
+            activeWeakSpots: [],
+            llm: ThrowingLLM(),
+            stt: stt,
+            tts: tts,
+            audioCapture: capture,
+            audioPlayback: playback,
+            sessionPersister: sessionPersister,
+            turnPersister: turnPersister,
+            voice: Voice(id: "v", displayName: "v"),
+            llmOptions: LLMOptions(modelName: "fake")
+        )
+        try await engine.start()
+        await #expect(throws: (any Error).self) {
+            _ = try await engine.runUserTurn()
+        }
+        let sessionId = sessionPersister.sessions.values.first!.id
+        let allTurns = try turnPersister.list(forSession: sessionId)
+        // ai-opening + user (incomplete) — no AI reply turn
+        #expect(allTurns.count == 2)
+        let userTurn = allTurns[1]
+        #expect(userTurn.speaker == .user)
+        #expect(userTurn.isComplete == false)
     }
 
     @Test func systemPromptIncludesPersonaAndModeInstructions() async throws {
