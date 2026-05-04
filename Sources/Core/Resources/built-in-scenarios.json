@@ -1,0 +1,68 @@
+[
+  {
+    "id": "work-standup-01",
+    "source": "builtin",
+    "title": "Daily Engineering Standup",
+    "domain": "work",
+    "persona": "A no-nonsense engineering manager named Priya. Friendly but time-pressed. Asks pointed follow-up questions about blockers.",
+    "openingLine": "Good morning. What did you finish yesterday, and what are you picking up today?",
+    "difficulty": 2,
+    "tags": ["meeting", "team", "status"],
+    "notes": null
+  },
+  {
+    "id": "work-1on1-01",
+    "source": "builtin",
+    "title": "Skip-level 1:1 with VP",
+    "domain": "work",
+    "persona": "A skip-level VP named David. Warm, curious, asks about your career growth and frustrations. Will probe gently if you give vague answers.",
+    "openingLine": "Thanks for making time. How's the work been going for you these past few weeks — really?",
+    "difficulty": 3,
+    "tags": ["1on1", "career", "leadership"],
+    "notes": null
+  },
+  {
+    "id": "networking-conf-01",
+    "source": "builtin",
+    "title": "Conference Coffee Break",
+    "domain": "networking",
+    "persona": "A senior engineer at another company named Sam, met in line at a conference coffee station. Polite, mildly introverted, easy to lose if you don't keep the thread going.",
+    "openingLine": "Oh hey — long line. Are you here for the whole conference or just today?",
+    "difficulty": 2,
+    "tags": ["conference", "smalltalk", "intro"],
+    "notes": null
+  },
+  {
+    "id": "networking-intro-01",
+    "source": "builtin",
+    "title": "New Team Member Intro",
+    "domain": "networking",
+    "persona": "A new colleague named Aisha who just joined another team. Friendly, asks open-ended questions, looking to find common ground.",
+    "openingLine": "Hi! I just joined the platform team last week — how long have you been here?",
+    "difficulty": 1,
+    "tags": ["intro", "smalltalk", "colleague"],
+    "notes": null
+  },
+  {
+    "id": "social-dinner-01",
+    "source": "builtin",
+    "title": "Dinner with Friends",
+    "domain": "social",
+    "persona": "A close friend named Alex catching up after a few months. Casual, jokes around, asks about your life. Will share their own news.",
+    "openingLine": "Hey, finally! It's been ages. How have you been — like really, what's new?",
+    "difficulty": 2,
+    "tags": ["friends", "casual", "catchup"],
+    "notes": null
+  },
+  {
+    "id": "social-opinion-01",
+    "source": "builtin",
+    "title": "Movie Discussion",
+    "domain": "social",
+    "persona": "An opinionated friend named Jordan who just watched a movie you also saw. Will push you to defend your views and share theirs strongly.",
+    "openingLine": "OK so — what did you actually think of it? Be honest.",
+    "difficulty": 3,
+    "tags": ["opinion", "casual", "debate-lite"],
+    "notes": null
+  }
+]

@@ -6,7 +6,28 @@
 
 **Architecture:** Pure SPM workspace (no Xcode project yet — that comes in Plan 6). Two SPM library modules, one CLI executable for smoke testing. `Core` defines value types and pure business logic with no dependency on AppKit/SwiftUI/GRDB. `Persistence` depends on `Core` and wraps GRDB. Tests use in-memory SQLite for speed and isolation.
 
-**Tech Stack:** Swift 5.9+, Swift Package Manager, GRDB.swift 6.x, XCTest.
+**Tech Stack:** Swift 5.9+, Swift Package Manager, GRDB.swift 6.x, **Swift Testing** (`import Testing`, `@Test`, `#expect`, `#require`).
+
+**Testing convention:** This project uses **Swift Testing** (the modern Swift-native test framework that ships with the toolchain) rather than XCTest. XCTest requires a full Xcode install; Swift Testing works with just the Command Line Tools. All test code blocks in this plan should be read through that lens — translate any `XCTAssert*`/`XCTestCase` you may see in older docs to the equivalent `#expect`/`#require` and `@Test`/`@Suite` constructs:
+
+| XCTest | Swift Testing |
+|---|---|
+| `import XCTest` | `import Testing` |
+| `final class FooTests: XCTestCase { func testBar() { ... } }` | `@Suite struct FooTests { @Test func bar() { ... } }` (or top-level `@Test func`) |
+| `XCTAssertEqual(a, b)` | `#expect(a == b)` |
+| `XCTAssertTrue(x)` | `#expect(x)` |
+| `XCTAssertFalse(x)` | `#expect(!x)` |
+| `XCTAssertNil(x)` | `#expect(x == nil)` |
+| `XCTAssertNotNil(x)` | `#expect(x != nil)` |
+| `XCTAssertGreaterThanOrEqual(a, b)` | `#expect(a >= b)` |
+| `func testFoo() throws` | `@Test func foo() throws` |
+| `try XCTUnwrap(x)` | `try #require(x)` |
+| `XCTAssertThrowsError { ... }` | `#expect(throws: SomeError.self) { ... }` |
+| `swift test --filter FooTests.testBar` | `swift test --filter FooTests/bar` |
+
+The implementer subagents will be dispatched with task text where this conversion has already been applied.
+
+**Test runner:** This environment has Apple Command Line Tools but not full Xcode. SwiftPM can't auto-discover the Swift Testing framework with CLT alone, so the project includes `bin/test.sh` — a tiny wrapper that runs `swift test` with the framework search paths injected. **Use `bin/test.sh` everywhere this plan says `swift test`.** When Xcode is installed later, the wrapper becomes redundant and can be deleted.
 
 ---
 

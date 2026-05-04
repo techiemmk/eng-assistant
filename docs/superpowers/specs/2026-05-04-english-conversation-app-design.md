@@ -1,7 +1,7 @@
 # English Conversation Practice App — Design Spec
 
 **Date:** 2026-05-04
-**Author:** Manoj (with Claude)
+**Author:** Manoj Kumar M
 **Status:** Approved for implementation planning
 **Target user:** Single user (the author) — personal use on macOS
 
