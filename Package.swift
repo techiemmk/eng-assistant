@@ -7,6 +7,7 @@ let package = Package(
     products: [
         .library(name: "Core", targets: ["Core"]),
         .library(name: "Persistence", targets: ["Persistence"]),
+        .library(name: "Fakes", targets: ["Fakes"]),
         .executable(name: "smoke-cli", targets: ["SmokeCLI"]),
     ],
     dependencies: [
@@ -24,11 +25,16 @@ let package = Package(
                 .product(name: "GRDB", package: "GRDB.swift"),
             ]
         ),
+        .target(
+            name: "Fakes",
+            dependencies: ["Core"]
+        ),
         .executableTarget(
             name: "SmokeCLI",
-            dependencies: ["Core", "Persistence"]
+            dependencies: ["Core", "Persistence", "Fakes"]
         ),
-        .testTarget(name: "CoreTests", dependencies: ["Core"]),
+        .testTarget(name: "CoreTests", dependencies: ["Core", "Fakes"]),
         .testTarget(name: "PersistenceTests", dependencies: ["Persistence"]),
+        .testTarget(name: "FakesTests", dependencies: ["Fakes", "Core"]),
     ]
 )
