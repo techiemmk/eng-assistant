@@ -31,7 +31,7 @@ public struct SessionAnalyzer: Sendable {
         let turns = try turnPersister.list(forSession: sessionId)
 
         let metricsAnalyzer = MetricsAnalyzer(grammarJudge: grammarJudge, turnPersister: turnPersister)
-        let sessionMetrics = await metricsAnalyzer.analyze(turns: turns)
+        let sessionMetrics = try await metricsAnalyzer.analyze(turns: turns)
 
         let userTranscript = turns
             .filter { $0.speaker == .user && $0.isComplete }

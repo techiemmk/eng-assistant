@@ -48,7 +48,7 @@ import Fakes
             grammarJudge: GrammarJudge(llm: llm, options: LLMOptions(modelName: "fake")),
             turnPersister: persister
         )
-        let session = await analyzer.analyze(turns: turns)
+        let session = try await analyzer.analyze(turns: turns)
         #expect(persister.stored.count == 2)
         #expect(session.userTurnCount == 2)
         #expect(session.totalGrammarIssues == 3)
@@ -63,7 +63,7 @@ import Fakes
             grammarJudge: GrammarJudge(llm: llm, options: LLMOptions(modelName: "fake")),
             turnPersister: persister
         )
-        let session = await analyzer.analyze(turns: [])
+        let session = try await analyzer.analyze(turns: [])
         #expect(session.userTurnCount == 0)
         #expect(session.totalGrammarIssues == 0)
         #expect(session.totalFillerCount == 0)
@@ -85,7 +85,7 @@ import Fakes
             grammarJudge: GrammarJudge(llm: llm, options: LLMOptions(modelName: "fake")),
             turnPersister: persister
         )
-        let session = await analyzer.analyze(turns: turns)
+        let session = try await analyzer.analyze(turns: turns)
         #expect(session.userTurnCount == 1)
         #expect(persister.stored.count == 1)
     }

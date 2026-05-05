@@ -10,8 +10,7 @@ public enum CoachingEngine {
         recurringWeakSpots: [WeakSpot]
     ) -> Debrief {
         let summary = makeSummary(scenario: scenario, metrics: sessionMetrics)
-        let drills = makeDrills(recurringWeakSpots: recurringWeakSpots,
-                                newlyCreatedWeakSpots: newlyCreatedWeakSpots)
+        let drills = makeDrills(recurringWeakSpots: recurringWeakSpots)
         return Debrief(
             session: session,
             scenario: scenario,
@@ -30,7 +29,7 @@ public enum CoachingEngine {
         return "Practiced '\(scenario.title)' across \(n) user turn\(n == 1 ? "" : "s"); \(issues) clear grammar slip\(issues == 1 ? "" : "s") flagged."
     }
 
-    private static func makeDrills(recurringWeakSpots: [WeakSpot], newlyCreatedWeakSpots: [WeakSpot]) -> [String] {
+    private static func makeDrills(recurringWeakSpots: [WeakSpot]) -> [String] {
         let top = recurringWeakSpots
             .sorted { $0.occurrenceCount > $1.occurrenceCount }
             .prefix(3)

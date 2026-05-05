@@ -37,7 +37,12 @@ public struct MetricsAnalyzer: Sendable {
         self.turnPersister = turnPersister
     }
 
-    public func analyze(turns: [Turn]) async -> SessionMetrics {
+    /// Computes per-turn metrics for every complete user turn, persists each one
+    /// via `turnPersister.updateMetricsJson`, and returns aggregated session metrics.
+    /// Per-turn `GrammarJudge` failures are swallowed (a single LLM hiccup shouldn't
+    /// void the rest of the analysis), but persister write errors propagate so a
+    /// silent-corruption class of bug can't hide.
+    public func analyze(turns: [Turn]) async throws -> SessionMetrics {
         let userTurns = turns.filter { $0.speaker == .user && $0.isComplete }
         var totalWordCount = 0
         var totalFillerCount = 0
@@ -48,20 +53,18 @@ public struct MetricsAnalyzer: Sendable {
 
         for turn in userTurns {
             let text = TextMetricsCalculator.calculate(text: turn.text)
-            // GrammarJudge errors are swallowed at this level — a single LLM
-            // hiccup shouldn't void the whole session's metrics.
             let grammarCount = (try? await grammarJudge.countIssues(in: turn.text)) ?? 0
             let metrics = TurnMetrics(
-                wordsPerMinute: 0,           // populated in Plan 5 once audio durations land
-                pauseRatio: 0,               // ditto
+                wordsPerMinute: 0,
+                pauseRatio: 0,
                 fillerCount: text.fillerCount,
                 uniqueWordRatio: text.uniqueWordRatio,
                 grammarIssueCount: grammarCount
             )
-            if let data = try? encoder.encode(metrics),
-               let json = String(data: data, encoding: .utf8) {
-                try? turnPersister.updateMetricsJson(turnId: turn.id, json: json)
-            }
+            let data = try encoder.encode(metrics)
+            let json = String(decoding: data, as: UTF8.self)
+            try turnPersister.updateMetricsJson(turnId: turn.id, json: json)
+
             totalWordCount += text.totalWordCount
             totalFillerCount += text.fillerCount
             totalGrammar += grammarCount
