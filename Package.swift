@@ -8,6 +8,7 @@ let package = Package(
         .library(name: "Core", targets: ["Core"]),
         .library(name: "Persistence", targets: ["Persistence"]),
         .library(name: "Fakes", targets: ["Fakes"]),
+        .library(name: "Adapters", targets: ["Adapters"]),
         .executable(name: "smoke-cli", targets: ["SmokeCLI"]),
     ],
     dependencies: [
@@ -29,12 +30,17 @@ let package = Package(
             name: "Fakes",
             dependencies: ["Core"]
         ),
+        .target(
+            name: "Adapters",
+            dependencies: ["Core"]
+        ),
         .executableTarget(
             name: "SmokeCLI",
-            dependencies: ["Core", "Persistence", "Fakes"]
+            dependencies: ["Core", "Persistence", "Fakes", "Adapters"]
         ),
         .testTarget(name: "CoreTests", dependencies: ["Core", "Fakes"]),
         .testTarget(name: "PersistenceTests", dependencies: ["Persistence"]),
         .testTarget(name: "FakesTests", dependencies: ["Fakes", "Core"]),
+        .testTarget(name: "AdaptersTests", dependencies: ["Adapters", "Core"]),
     ]
 )
