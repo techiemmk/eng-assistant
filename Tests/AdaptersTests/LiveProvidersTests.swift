@@ -67,4 +67,39 @@ struct LiveProvidersTests {
         _ = result.data.count
         _ = result.sampleRate
     }
+
+    @Test func avAudioPlaybackPlaysGeneratedSineWave() async throws {
+        // Generate a 1-second 440 Hz sine wave at 22050 Hz, encode as WAV,
+        // and play it. Should complete in ~1 second on a working audio stack.
+        let sampleRate = 22050
+        let frequency: Float = 440
+        let duration: Float = 1.0
+        let totalSamples = Int(Float(sampleRate) * duration)
+        var samples = [Int16](repeating: 0, count: totalSamples)
+        for i in 0..<totalSamples {
+            let t = Float(i) / Float(sampleRate)
+            let amplitude: Float = 0.3
+            samples[i] = Int16(amplitude * 32767 * sin(2 * .pi * frequency * t))
+        }
+        let wav = WAVCodec.encode(pcm: samples, sampleRate: sampleRate)
+        let playback = AVAudioPlaybackImpl(timeout: 5)
+        try await playback.play(SynthesizedAudio(data: wav, sampleRate: sampleRate))
+    }
+
+    @Test func avAudioCaptureStartsAndStopsCleanly() async throws {
+        // This will fail with a permission error in non-entitled processes.
+        // In an entitled host, it should successfully start, capture briefly,
+        // and stop. We don't assert on the captured bytes since silence is valid.
+        let capture = AVAudioCaptureImpl()
+        do {
+            try await capture.startRecording()
+        } catch {
+            print("Skipping mic capture: \(error). (Run from an entitled host.)")
+            return
+        }
+        try await Task.sleep(nanoseconds: 500_000_000)  // 0.5 s
+        let wav = try await capture.stopRecording()
+        // A WAV with the standard 44-byte header is always at least 44 bytes.
+        #expect(wav.count >= 44)
+    }
 }
