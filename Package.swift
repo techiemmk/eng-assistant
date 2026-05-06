@@ -30,6 +30,6 @@ let package = Package(
         .testTarget(name: "PersistenceTests", dependencies: ["Persistence"]),
         .testTarget(name: "FakesTests", dependencies: ["Fakes", "Core"]),
         .testTarget(name: "AdaptersTests", dependencies: ["Adapters", "Core"]),
-        .testTarget(name: "EngAssistantAppTests", dependencies: ["EngAssistantApp"]),
+        .testTarget(name: "EngAssistantAppTests", dependencies: ["EngAssistantApp", "Core", "Persistence"]),
     ]
 )
