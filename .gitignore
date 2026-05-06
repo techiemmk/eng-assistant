@@ -1,7 +1,30 @@
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Swift Package Manager
 .build/
 .swiftpm/
-*.xcodeproj
 Package.resolved
-.superpowers/
+
+# Xcode (for anyone who opens the package in Xcode)
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+*.xcuserdata
+xcuserdata/
+
+# Build artifacts
 EngAssistant.app/
+
+# Brainstorming session scratch (visual companion mockups, etc.)
+.superpowers/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
