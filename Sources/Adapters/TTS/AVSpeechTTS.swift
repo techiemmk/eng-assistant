@@ -38,7 +38,7 @@ public final class AVSpeechTTS: TTSProvider, @unchecked Sendable {
             }
             group.addTask { [timeout] in
                 try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
-                return await collector.snapshot()
+                return collector.snapshot()
             }
             let first = try await group.next()!
             group.cancelAll()
@@ -48,6 +48,10 @@ public final class AVSpeechTTS: TTSProvider, @unchecked Sendable {
 }
 
 private final class AVSpeechCollector: NSObject, AVSpeechSynthesizerDelegate, @unchecked Sendable {
+    /// All mutable state below is guarded by `lock`. Lock is held only briefly
+    /// inside accessors — never across `continuation.resume`, to avoid blocking
+    /// the synth's internal queue on a continuation hop.
+    private let lock = NSLock()
     private var collected = Data()
     private var sampleRate: Int = 0
     private var continuation: CheckedContinuation<SynthesizedAudio, Never>?
@@ -55,29 +59,39 @@ private final class AVSpeechCollector: NSObject, AVSpeechSynthesizerDelegate, @u
 
     func run(utterance: AVSpeechUtterance) async -> SynthesizedAudio {
         await withCheckedContinuation { c in
+            lock.lock()
             self.continuation = c
+            lock.unlock()
             self.synth?.write(utterance) { [weak self] buffer in
                 guard let self, let pcm = buffer as? AVAudioPCMBuffer else { return }
+                self.lock.lock()
                 if self.sampleRate == 0 {
                     self.sampleRate = Int(pcm.format.sampleRate)
                 }
-                guard pcm.frameLength > 0, let channelData = pcm.floatChannelData?.pointee else { return }
-                let count = Int(pcm.frameLength)
-                let bytes = Data(bytes: channelData, count: count * MemoryLayout<Float>.size)
-                self.collected.append(bytes)
+                if pcm.frameLength > 0, let channelData = pcm.floatChannelData?.pointee {
+                    let count = Int(pcm.frameLength)
+                    let bytes = Data(bytes: channelData, count: count * MemoryLayout<Float>.size)
+                    self.collected.append(bytes)
+                }
+                self.lock.unlock()
             }
-            // Continuation is resumed from `didFinish` or `didCancel` below.
         }
     }
 
     func snapshot() -> SynthesizedAudio {
-        SynthesizedAudio(data: collected, sampleRate: sampleRate)
+        lock.lock()
+        let result = SynthesizedAudio(data: collected, sampleRate: sampleRate)
+        lock.unlock()
+        return result
     }
 
     private func finishOnce() {
-        guard let c = continuation else { return }
+        lock.lock()
+        let c = continuation
         continuation = nil
-        c.resume(returning: SynthesizedAudio(data: collected, sampleRate: sampleRate))
+        let payload = SynthesizedAudio(data: collected, sampleRate: sampleRate)
+        lock.unlock()
+        c?.resume(returning: payload)
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
