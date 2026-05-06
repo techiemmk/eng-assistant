@@ -7,4 +7,5 @@ public enum AppSettingKey: String, CaseIterable, Sendable {
     case llmModelName = "llm_model_name"
     case ttsVoiceName = "tts_voice_name"
     case sttModelName = "stt_model_name"
+    case didCompleteOnboarding = "did_complete_onboarding"
 }
