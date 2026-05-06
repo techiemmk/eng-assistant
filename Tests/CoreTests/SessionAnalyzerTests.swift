@@ -17,6 +17,9 @@ import Fakes
         func find(id: UUID) throws -> Session? { sessions[id] }
         func finalize(id: UUID, endedAt: Date, summary: String?) throws {}
         func listActive() throws -> [Session] { Array(sessions.values) }
+        func listRecent(limit: Int) throws -> [Session] {
+            Array(sessions.values.sorted { $0.startedAt > $1.startedAt }.prefix(limit))
+        }
     }
 
     final class FakeTurnPersister: TurnPersisting, @unchecked Sendable {

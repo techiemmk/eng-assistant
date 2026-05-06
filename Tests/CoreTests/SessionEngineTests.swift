@@ -16,6 +16,9 @@ final class InMemorySessionPersister: SessionPersisting, @unchecked Sendable {
     func listActive() throws -> [Session] {
         sessions.values.filter { $0.status == .active }
     }
+    func listRecent(limit: Int) throws -> [Session] {
+        Array(sessions.values.sorted { $0.startedAt > $1.startedAt }.prefix(limit))
+    }
 }
 
 final class InMemoryTurnPersister: TurnPersisting, @unchecked Sendable {

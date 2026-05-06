@@ -58,6 +58,15 @@ public final class SessionRepository {
         }
     }
 
+    public func listRecent(limit: Int) throws -> [Session] {
+        try database.queue.read { db in
+            try Row.fetchAll(db, sql: """
+                SELECT * FROM sessions ORDER BY started_at DESC LIMIT ?
+                """, arguments: [limit])
+                .map { try Self.session(from: $0) }
+        }
+    }
+
     public func finalize(id: UUID, endedAt: Date, summary: String?) throws {
         try database.queue.write { db in
             try db.execute(sql: """

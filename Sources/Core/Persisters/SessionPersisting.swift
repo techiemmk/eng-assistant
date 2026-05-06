@@ -5,4 +5,5 @@ public protocol SessionPersisting: Sendable {
     func find(id: UUID) throws -> Session?
     func finalize(id: UUID, endedAt: Date, summary: String?) throws
     func listActive() throws -> [Session]
+    func listRecent(limit: Int) throws -> [Session]
 }
