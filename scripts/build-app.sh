@@ -27,8 +27,9 @@ cp "Sources/EngAssistantApp/Info.plist" "$APP_DIR/Contents/Info.plist"
 
 # Copy SPM resource bundle if it exists (for built-in scenarios JSON, etc.)
 if [[ -d ".build/release/EngAssistant_Core.bundle" ]]; then
-    cp -R ".build/release/EngAssistant_Core.bundle" "$APP_DIR/Contents/Resources/"
+    cp -R ".build/release/EngAssistant_Core.bundle" "$APP_DIR/"
 fi
+[[ -d "$APP_DIR/EngAssistant_Core.bundle" ]] || { echo "✗ resource bundle missing from $APP_DIR — Core resources won't load at runtime"; exit 1; }
 
 echo "✓ Built $APP_DIR"
 echo "  To run: open $APP_DIR"
