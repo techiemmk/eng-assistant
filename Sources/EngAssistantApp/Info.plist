@@ -6,13 +6,15 @@
     <key>CFBundleExecutable</key><string>EngAssistant</string>
     <key>CFBundleIdentifier</key><string>com.manoj.engassistant</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundleName</key><string>EngAssistant</string>
+    <key>CFBundleName</key><string>Jul EngAssistant</string>
+    <key>CFBundleDisplayName</key><string>Jul EngAssistant</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>0.1.0</string>
     <key>CFBundleVersion</key><string>1</string>
+    <key>LSApplicationCategoryType</key><string>public.app-category.education</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSHighResolutionCapable</key><true/>
-    <key>NSMicrophoneUsageDescription</key><string>EngAssistant uses your microphone for voice conversation practice. Audio stays on your Mac.</string>
+    <key>NSMicrophoneUsageDescription</key><string>Jul EngAssistant uses your microphone for voice conversation practice. Audio stays on your Mac.</string>
     <key>NSPrincipalClass</key><string>NSApplication</string>
 </dict>
 </plist>

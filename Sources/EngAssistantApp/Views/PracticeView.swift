@@ -11,26 +11,36 @@ public struct PracticeView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Practice").font(.largeTitle).bold()
+        VStack(alignment: .leading, spacing: 18) {
+            // Header
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Practice").font(Theme.appTitle)
+                    Text("Pick a scenario, choose a mode, and start talking.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 Picker("Mode", selection: $viewModel.mode) {
-                    Text("Flow").tag(SessionMode.flow)
-                    Text("Coach").tag(SessionMode.coach)
-                }.pickerStyle(.segmented).frame(width: 200)
+                    Label("Flow", systemImage: "wind").tag(SessionMode.flow)
+                    Label("Coach", systemImage: "lightbulb.fill").tag(SessionMode.coach)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 240)
             }
 
-            HStack(spacing: 12) {
-                domainChip(label: "All", value: nil)
-                domainChip(label: "Work", value: .work)
-                domainChip(label: "Networking", value: .networking)
-                domainChip(label: "Social", value: .social)
+            // Domain filters
+            HStack(spacing: 8) {
+                domainChip(label: "All", icon: "square.grid.2x2", value: nil)
+                domainChip(label: "Work", icon: Theme.domainIcon(.work), value: .work)
+                domainChip(label: "Networking", icon: Theme.domainIcon(.networking), value: .networking)
+                domainChip(label: "Social", icon: Theme.domainIcon(.social), value: .social)
                 Spacer()
             }
 
+            // Scenario grid
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 260))], spacing: 12) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 14)], spacing: 14) {
                     ForEach(viewModel.filteredScenarios) { scenario in
                         ScenarioCardView(
                             scenario: scenario,
@@ -39,29 +49,49 @@ public struct PracticeView: View {
                         )
                     }
                 }
+                .padding(.vertical, 4)
             }
 
+            // Start button
             HStack {
+                if let s = viewModel.selectedScenario {
+                    HStack(spacing: 6) {
+                        Image(systemName: Theme.domainIcon(s.domain))
+                            .foregroundStyle(Theme.domainColor(s.domain))
+                        Text("Ready: \(s.title)")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Spacer()
-                Button("Start Session") {
+                Button {
                     if let s = viewModel.selectedScenario {
                         onStart(s, viewModel.mode)
                     }
+                } label: {
+                    Label("Start session", systemImage: "play.fill")
+                        .frame(minWidth: 140)
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .keyboardShortcut(.return)
                 .disabled(viewModel.selectedScenario == nil)
-                .controlSize(.large)
             }
         }
-        .padding()
+        .padding(20)
     }
 
-    private func domainChip(label: String, value: ScenarioDomain?) -> some View {
-        Button(label) {
+    private func domainChip(label: String, icon: String, value: ScenarioDomain?) -> some View {
+        let isActive = viewModel.domainFilter == value
+        return Button {
             viewModel.domainFilter = value
+        } label: {
+            Label(label, systemImage: icon)
+                .font(Theme.chip)
+                .padding(.horizontal, 4)
         }
         .buttonStyle(.bordered)
-        .tint(viewModel.domainFilter == value ? .accentColor : .secondary)
+        .tint(isActive ? Theme.brand : .secondary)
     }
 }
 
@@ -72,32 +102,65 @@ private struct ScenarioCardView: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(scenario.title).font(.headline)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top) {
+                    domainBadge
+                    Spacer()
+                    difficultyDots
+                }
+                Text(scenario.title)
+                    .font(Theme.cardTitle)
                 Text(scenario.persona)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(3)
-                HStack {
-                    Text(scenario.domain.rawValue.capitalized)
-                        .font(.caption)
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(.gray.opacity(0.15))
-                        .clipShape(Capsule())
-                    Text("Difficulty \(scenario.difficulty)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                if !scenario.tags.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(scenario.tags.prefix(3), id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption2)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(.gray.opacity(0.15))
+                                .clipShape(Capsule())
+                        }
+                    }
                 }
             }
-            .padding(12)
+            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.gray.opacity(0.05))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Theme.brand.opacity(0.10) : Theme.cardSurface)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Theme.brand : Color.clear, lineWidth: 2)
+            )
+            .shadow(color: isSelected ? Theme.brand.opacity(0.25) : .black.opacity(0.04), radius: isSelected ? 6 : 2, y: isSelected ? 3 : 1)
+            .animation(.easeInOut(duration: 0.15), value: isSelected)
         }
         .buttonStyle(.plain)
+    }
+
+    private var domainBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: Theme.domainIcon(scenario.domain))
+            Text(scenario.domain.rawValue.capitalized)
+        }
+        .font(Theme.chip)
+        .padding(.horizontal, 8).padding(.vertical, 4)
+        .background(Theme.domainColor(scenario.domain).opacity(0.18))
+        .foregroundStyle(Theme.domainColor(scenario.domain))
+        .clipShape(Capsule())
+    }
+
+    private var difficultyDots: some View {
+        HStack(spacing: 3) {
+            ForEach(1...5, id: \.self) { i in
+                Circle()
+                    .fill(i <= scenario.difficulty ? Theme.brand : Color.gray.opacity(0.25))
+                    .frame(width: 6, height: 6)
+            }
+        }
     }
 }

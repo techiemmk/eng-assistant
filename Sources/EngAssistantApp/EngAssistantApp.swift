@@ -8,7 +8,7 @@ struct EngAssistantApp: App {
     @StateObject private var appState = AppState()
 
     var body: some Scene {
-        WindowGroup("EngAssistant") {
+        WindowGroup(Theme.appName) {
             Group {
                 if let bootstrapError = appState.bootstrapError {
                     BootstrapErrorView(message: bootstrapError)
@@ -20,8 +20,12 @@ struct EngAssistantApp: App {
                     ContentView(container: container)
                 } else {
                     ProgressView("Initializing...")
+                        .controlSize(.large)
+                        .tint(Theme.brand)
                 }
             }
+            .tint(Theme.brand)
+            .fontDesign(.rounded)
             .task {
                 await appState.bootstrap()
             }
@@ -58,7 +62,7 @@ final class AppState: ObservableObject {
                 _ = try? sweeper.sweep()
             }
         } catch {
-            bootstrapError = "Couldn't start EngAssistant: \(error.localizedDescription). Check the install — the .app bundle may be missing required resources."
+            bootstrapError = "Couldn't start \(Theme.appName): \(error.localizedDescription). Check the install — the .app bundle may be missing required resources."
             FileHandle.standardError.write(Data("[bootstrap] container init failed: \(error)\n".utf8))
         }
     }
@@ -75,10 +79,14 @@ struct BootstrapErrorView: View {
     let message: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Label("EngAssistant couldn't start", systemImage: "exclamationmark.triangle.fill")
-                .font(.title2).bold()
-                .foregroundStyle(.red)
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 12) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.red)
+                Text("\(Theme.appName) couldn't start")
+                    .font(Theme.sectionTitle)
+            }
             Text(message)
                 .font(.body)
                 .foregroundStyle(.secondary)
@@ -88,9 +96,10 @@ struct BootstrapErrorView: View {
                     NSApplication.shared.terminate(nil)
                 }
                 .keyboardShortcut(.defaultAction)
+                .controlSize(.large)
             }
         }
         .padding(28)
-        .frame(width: 480, height: 240)
+        .frame(width: 480, height: 260)
     }
 }

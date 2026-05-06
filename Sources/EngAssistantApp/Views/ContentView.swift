@@ -21,12 +21,26 @@ public struct ContentView: View {
 
     public var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
-                Label("Practice", systemImage: "mic.fill").tag(AppPane.practice)
-                Label("Sessions", systemImage: "clock").tag(AppPane.history)
-                Label("Settings", systemImage: "gear").tag(AppPane.settings)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 10) {
+                    Image(systemName: Theme.appIconSymbol)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(Theme.brand)
+                    Text(Theme.appName)
+                        .font(.system(.headline, design: .rounded, weight: .semibold))
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 14)
+                .padding(.bottom, 8)
+
+                List(selection: $selection) {
+                    Label("Practice", systemImage: "mic.fill").tag(AppPane.practice)
+                    Label("Sessions", systemImage: "clock.fill").tag(AppPane.history)
+                    Label("Settings", systemImage: "gearshape.fill").tag(AppPane.settings)
+                }
+                .listStyle(.sidebar)
             }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 220)
+            .navigationSplitViewColumnWidth(min: 200, ideal: 230)
         } detail: {
             switch selection {
             case .practice:
@@ -72,7 +86,7 @@ public struct ContentView: View {
                 SettingsView(viewModel: SettingsViewModel(persister: container.settingsRepository))
             }
         }
-        .navigationTitle("EngAssistant")
+        .navigationTitle(Theme.appName)
     }
 }
 
