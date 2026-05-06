@@ -13,8 +13,14 @@ func main() async throws {
         try FileManager.default.removeItem(at: dbPath)
     }
 
+    // Use a smoke-specific app-support folder so we don't pollute real user data.
+    let layout = StorageLayout(appName: "EngAssistantSmoke")
+    try layout.ensureDirectories()
+    let audioStore = AudioFileStore(layout: layout)
+
     print("→ Mode: \(live ? "LIVE Ollama @ \(modelName)" : "fakes")")
     print("→ Opening DB at \(dbPath.path)")
+    print("→ Audio root: \(layout.audioDirectory.path)")
     let db = try Database.onDisk(at: dbPath)
 
     print("→ Loading scenario")
@@ -26,8 +32,6 @@ func main() async throws {
     let turnRepo = TurnRepository(database: db)
     let weakSpotRepo = WeakSpotRepository(database: db)
 
-    // Two LLM clients: the engine uses one, the analyzer uses another. In live
-    // mode, both go to real Ollama. In fake mode, two separate scripted fakes.
     let engineLLM: LLMProvider
     let analysisLLM: LLMProvider
     if live {
@@ -66,7 +70,8 @@ func main() async throws {
         sessionPersister: sessionRepo,
         turnPersister: turnRepo,
         voice: Voice(id: "default", displayName: "Default"),
-        llmOptions: LLMOptions(modelName: modelName)
+        llmOptions: LLMOptions(modelName: modelName),
+        audioFilePersister: audioStore
     )
 
     print("→ Starting session")
@@ -114,6 +119,14 @@ func main() async throws {
         print("Suggested drills:")
         for d in debrief.suggestedDrills {
             print("  • \(d)")
+        }
+    }
+
+    let pathfulTurns = debrief.allTurns.filter { $0.audioPath != nil }
+    if !pathfulTurns.isEmpty {
+        print("Persisted audio:")
+        for t in pathfulTurns {
+            print("  [\(t.turnIndex)] \(t.speaker.rawValue): \(t.audioPath ?? "")")
         }
     }
 }
