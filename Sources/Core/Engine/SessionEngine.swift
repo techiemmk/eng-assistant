@@ -101,12 +101,18 @@ public actor SessionEngine {
         let userStart = Date()
         let transcript = try await stt.transcribe(audio: audio)
 
-        let userAudioPath: String? = try? audioFilePersister?.write(
-            audio: audio,
-            sessionId: current.sessionId,
-            turnIndex: current.nextTurnIndex,
-            speaker: .user
-        )
+        let userAudioPath: String?
+        do {
+            userAudioPath = try audioFilePersister?.write(
+                audio: audio,
+                sessionId: current.sessionId,
+                turnIndex: current.nextTurnIndex,
+                speaker: .user
+            )
+        } catch {
+            FileHandle.standardError.write(Data("[SessionEngine] audio persist failed (turn \(current.nextTurnIndex), speaker user): \(error)\n".utf8))
+            userAudioPath = nil
+        }
 
         let userTurnId = UUID()
         let userTurn = Turn(
@@ -190,12 +196,18 @@ public actor SessionEngine {
         try await audioPlayback.play(audio)
         let elapsedPlayback = Int(Date().timeIntervalSince(playStart) * 1000)
 
-        let audioPath: String? = try? audioFilePersister?.write(
-            audio: audio.data,
-            sessionId: current.sessionId,
-            turnIndex: current.nextTurnIndex,
-            speaker: .ai
-        )
+        let audioPath: String?
+        do {
+            audioPath = try audioFilePersister?.write(
+                audio: audio.data,
+                sessionId: current.sessionId,
+                turnIndex: current.nextTurnIndex,
+                speaker: .ai
+            )
+        } catch {
+            FileHandle.standardError.write(Data("[SessionEngine] audio persist failed (turn \(current.nextTurnIndex), speaker ai): \(error)\n".utf8))
+            audioPath = nil
+        }
 
         let turn = Turn(
             id: UUID(),
@@ -222,12 +234,18 @@ public actor SessionEngine {
         try await audioPlayback.play(audio)
         let elapsedPlayback = Int(Date().timeIntervalSince(playStart) * 1000)
 
-        let audioPath: String? = try? audioFilePersister?.write(
-            audio: audio.data,
-            sessionId: current.sessionId,
-            turnIndex: current.nextTurnIndex,
-            speaker: .ai
-        )
+        let audioPath: String?
+        do {
+            audioPath = try audioFilePersister?.write(
+                audio: audio.data,
+                sessionId: current.sessionId,
+                turnIndex: current.nextTurnIndex,
+                speaker: .ai
+            )
+        } catch {
+            FileHandle.standardError.write(Data("[SessionEngine] audio persist failed (turn \(current.nextTurnIndex), speaker ai): \(error)\n".utf8))
+            audioPath = nil
+        }
 
         let turn = Turn(
             id: UUID(),
