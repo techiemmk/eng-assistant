@@ -1,6 +1,10 @@
 import Foundation
 
-public struct SessionAnalyzer: Sendable {
+public protocol SessionAnalyzing: Sendable {
+    func analyze(sessionId: UUID) async throws -> Debrief
+}
+
+public struct SessionAnalyzer: Sendable, SessionAnalyzing {
     private let grammarJudge: GrammarJudge
     private let weakSpotExtractor: WeakSpotExtractor
     private let weakSpotMerger: WeakSpotMerger
