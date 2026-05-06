@@ -46,4 +46,17 @@ import Foundation
             )
         }
     }
+
+    @Test func handlesLargeStdinWithoutDeadlock() async throws {
+        let runner = ForegroundProcessRunner()
+        // 256 KB of input — well past macOS's default ~64 KB pipe buffer.
+        let big = Data(repeating: 0x41, count: 256 * 1024)
+        let result = try await runner.run(
+            executable: "/bin/cat",
+            arguments: [],
+            stdin: big
+        )
+        #expect(result.exitCode == 0)
+        #expect(result.stdout.count == big.count)
+    }
 }
