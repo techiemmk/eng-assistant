@@ -14,6 +14,7 @@ public actor SessionEngine {
     private let audioPlayback: AudioPlayback
     private let sessionPersister: SessionPersisting
     private let turnPersister: TurnPersisting
+    private let audioFilePersister: AudioFilePersisting?
 
     /// Active-session state. `nil` before `start()` and after no session has been
     /// initialized; non-`nil` once `start()` succeeds. Bundling sessionId, history,
@@ -40,7 +41,8 @@ public actor SessionEngine {
         sessionPersister: SessionPersisting,
         turnPersister: TurnPersisting,
         voice: Voice,
-        llmOptions: LLMOptions
+        llmOptions: LLMOptions,
+        audioFilePersister: AudioFilePersisting? = nil
     ) {
         self.scenario = scenario
         self.mode = mode
@@ -54,6 +56,7 @@ public actor SessionEngine {
         self.turnPersister = turnPersister
         self.voice = voice
         self.llmOptions = llmOptions
+        self.audioFilePersister = audioFilePersister
     }
 
     public func start() async throws {
@@ -98,6 +101,13 @@ public actor SessionEngine {
         let userStart = Date()
         let transcript = try await stt.transcribe(audio: audio)
 
+        let userAudioPath: String? = try? audioFilePersister?.write(
+            audio: audio,
+            sessionId: current.sessionId,
+            turnIndex: current.nextTurnIndex,
+            speaker: .user
+        )
+
         let userTurnId = UUID()
         let userTurn = Turn(
             id: userTurnId,
@@ -105,7 +115,7 @@ public actor SessionEngine {
             turnIndex: current.nextTurnIndex,
             speaker: .user,
             text: transcript.text,
-            audioPath: nil,
+            audioPath: userAudioPath,
             startedAt: userStart,
             durationMs: 0,
             metricsJson: nil,
@@ -180,13 +190,20 @@ public actor SessionEngine {
         try await audioPlayback.play(audio)
         let elapsedPlayback = Int(Date().timeIntervalSince(playStart) * 1000)
 
+        let audioPath: String? = try? audioFilePersister?.write(
+            audio: audio.data,
+            sessionId: current.sessionId,
+            turnIndex: current.nextTurnIndex,
+            speaker: .ai
+        )
+
         let turn = Turn(
             id: UUID(),
             sessionId: current.sessionId,
             turnIndex: current.nextTurnIndex,
             speaker: .ai,
             text: text,
-            audioPath: nil,
+            audioPath: audioPath,
             startedAt: synthStart,
             durationMs: elapsedPlayback,
             metricsJson: nil,
@@ -205,13 +222,20 @@ public actor SessionEngine {
         try await audioPlayback.play(audio)
         let elapsedPlayback = Int(Date().timeIntervalSince(playStart) * 1000)
 
+        let audioPath: String? = try? audioFilePersister?.write(
+            audio: audio.data,
+            sessionId: current.sessionId,
+            turnIndex: current.nextTurnIndex,
+            speaker: .ai
+        )
+
         let turn = Turn(
             id: UUID(),
             sessionId: current.sessionId,
             turnIndex: current.nextTurnIndex,
             speaker: .ai,
             text: originalText,
-            audioPath: nil,
+            audioPath: audioPath,
             startedAt: startedAt,
             durationMs: elapsedPlayback,
             metricsJson: nil,

@@ -32,6 +32,14 @@ final class InMemoryTurnPersister: TurnPersisting, @unchecked Sendable {
     }
 }
 
+final class InMemoryAudioFilePersister: AudioFilePersisting, @unchecked Sendable {
+    var written: [(sessionId: UUID, turnIndex: Int, speaker: Speaker, byteCount: Int)] = []
+    func write(audio: Data, sessionId: UUID, turnIndex: Int, speaker: Speaker) throws -> String {
+        written.append((sessionId, turnIndex, speaker, audio.count))
+        return "audio/\(sessionId.uuidString)/\(speaker.rawValue)-turn-\(String(format: "%03d", turnIndex)).wav"
+    }
+}
+
 @Suite struct SessionEngineTests {
     private static let scenario = Scenario(
         id: "test-01", source: .builtin, title: "Test", domain: .work,
@@ -189,5 +197,40 @@ final class InMemoryTurnPersister: TurnPersisting, @unchecked Sendable {
         #expect(msgs.first?.role == .system)
         #expect(msgs.first?.content.contains("Test persona.") == true)
         #expect(msgs.contains { $0.role == .user && $0.content == "hi" })
+    }
+
+    @Test func audioFilePersisterIsCalledForEachTurnWhenProvided() async throws {
+        let sessionPersister = InMemorySessionPersister()
+        let turnPersister = InMemoryTurnPersister()
+        let audioPersister = InMemoryAudioFilePersister()
+        let llm = FakeLLMProvider(scriptedReplyBatches: [["Hello there."]])
+        let stt = FakeSTTProvider(scriptedTexts: ["Hi."])
+        let tts = FakeTTSProvider()
+        let capture = FakeAudioCapture(scriptedClipByteCounts: [100])
+        let playback = FakeAudioPlayback()
+        let engine = SessionEngine(
+            scenario: Self.scenario,
+            mode: .flow,
+            activeWeakSpots: [],
+            llm: llm,
+            stt: stt,
+            tts: tts,
+            audioCapture: capture,
+            audioPlayback: playback,
+            sessionPersister: sessionPersister,
+            turnPersister: turnPersister,
+            voice: Voice(id: "v", displayName: "v"),
+            llmOptions: LLMOptions(modelName: "fake"),
+            audioFilePersister: audioPersister
+        )
+        try await engine.start()
+        _ = try await engine.runUserTurn()
+        // Three turns: AI opening, User, AI reply → all three should have written audio.
+        #expect(audioPersister.written.count == 3)
+        #expect(audioPersister.written.map(\.speaker) == [.ai, .user, .ai])
+        #expect(audioPersister.written.map(\.turnIndex) == [0, 1, 2])
+        let session = sessionPersister.sessions.values.first!
+        let allTurns = try turnPersister.list(forSession: session.id)
+        #expect(allTurns.allSatisfy { $0.audioPath != nil })
     }
 }
