@@ -81,8 +81,8 @@ public final class AVAudioCaptureImpl: AudioCapture, @unchecked Sendable {
     }
 
     public func stopRecording() async throws -> Data {
-        engine.inputNode.removeTap(onBus: 0)
         engine.stop()
+        engine.inputNode.removeTap(onBus: 0)
         lock.lock()
         let captured = buffer
         buffer.removeAll(keepingCapacity: false)
