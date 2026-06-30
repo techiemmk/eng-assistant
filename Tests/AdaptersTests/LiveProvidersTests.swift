@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import AVFoundation
 import Core
 import Adapters
 
@@ -60,12 +61,20 @@ struct LiveProvidersTests {
             text: "Hello.",
             voice: Voice(id: "com.apple.voice.compact.en-US.Samantha", displayName: "Samantha")
         )
-        // On well-behaved hosts, data should be non-empty. On hosts where
-        // AVSpeechSynthesizer.write doesn't deliver buffers, the timeout
-        // returns whatever was collected (possibly empty). We only assert
-        // the call returns within timeout, not that bytes are present.
-        _ = result.data.count
-        _ = result.sampleRate
+        // On hosts where AVSpeechSynthesizer.write never delivers buffers,
+        // the timeout returns empty data; treat that as "skip the format
+        // assertions" rather than failing the test.
+        guard !result.data.isEmpty else { return }
+        // Must be a real WAV container — AVAudioPlayer rejects raw PCM with
+        // kAudioFileUnsupportedFileTypeError ('typ?'), and that's the bug
+        // this test guards against.
+        #expect(result.data.count >= 44)
+        #expect(result.data.subdata(in: 0..<4) == Data("RIFF".utf8))
+        #expect(result.data.subdata(in: 8..<12) == Data("WAVE".utf8))
+        #expect(result.sampleRate > 0)
+        // Round-trip through AVAudioPlayer to prove the container is valid
+        // — this is the exact call the runtime makes during session start.
+        _ = try AVAudioPlayer(data: result.data)
     }
 
     @Test func avAudioPlaybackPlaysGeneratedSineWave() async throws {

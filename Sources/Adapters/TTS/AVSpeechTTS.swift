@@ -52,7 +52,12 @@ private final class AVSpeechCollector: NSObject, AVSpeechSynthesizerDelegate, @u
     /// inside accessors — never across `continuation.resume`, to avoid blocking
     /// the synth's internal queue on a continuation hop.
     private let lock = NSLock()
-    private var collected = Data()
+    /// Mono Int16 PCM samples, converted from the synthesizer's Float32 buffers
+    /// as they arrive. Stored as Int16 so we can hand them straight to
+    /// `WAVCodec.encode` at completion — `AVAudioPlayer(data:)` requires a
+    /// recognized container, so returning raw PCM bytes makes playback fail
+    /// with kAudioFileUnsupportedFileTypeError ('typ?').
+    private var samples: [Int16] = []
     private var sampleRate: Int = 0
     private var continuation: CheckedContinuation<SynthesizedAudio, Never>?
     weak var synth: AVSpeechSynthesizer?
@@ -70,17 +75,28 @@ private final class AVSpeechCollector: NSObject, AVSpeechSynthesizerDelegate, @u
                 }
                 if pcm.frameLength > 0, let channelData = pcm.floatChannelData?.pointee {
                     let count = Int(pcm.frameLength)
-                    let bytes = Data(bytes: channelData, count: count * MemoryLayout<Float>.size)
-                    self.collected.append(bytes)
+                    self.samples.reserveCapacity(self.samples.count + count)
+                    for i in 0..<count {
+                        let clamped = max(-1.0, min(1.0, channelData[i]))
+                        self.samples.append(Int16(clamped * 32767))
+                    }
                 }
                 self.lock.unlock()
             }
         }
     }
 
+    private func makePayloadLocked() -> SynthesizedAudio {
+        guard !samples.isEmpty else {
+            return SynthesizedAudio(data: Data(), sampleRate: 0)
+        }
+        let wav = WAVCodec.encode(pcm: samples, sampleRate: sampleRate)
+        return SynthesizedAudio(data: wav, sampleRate: sampleRate)
+    }
+
     func snapshot() -> SynthesizedAudio {
         lock.lock()
-        let result = SynthesizedAudio(data: collected, sampleRate: sampleRate)
+        let result = makePayloadLocked()
         lock.unlock()
         return result
     }
@@ -89,7 +105,7 @@ private final class AVSpeechCollector: NSObject, AVSpeechSynthesizerDelegate, @u
         lock.lock()
         let c = continuation
         continuation = nil
-        let payload = SynthesizedAudio(data: collected, sampleRate: sampleRate)
+        let payload = makePayloadLocked()
         lock.unlock()
         c?.resume(returning: payload)
     }
