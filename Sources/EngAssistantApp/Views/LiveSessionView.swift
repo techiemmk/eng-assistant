@@ -18,14 +18,14 @@ public struct LiveSessionView: View {
             transcriptScroll
             if let err = viewModel.lastError {
                 Text(err)
-                    .foregroundStyle(.red)
-                    .font(.caption)
+                    .foregroundStyle(Theme.danger)
+                    .font(Theme.caption)
                     .padding(.horizontal)
                     .padding(.top, 4)
             }
             controlBar
         }
-        .frame(minWidth: 640, minHeight: 520)
+        .frame(minWidth: 820, minHeight: 620)
     }
 
     private var header: some View {
@@ -33,23 +33,23 @@ public struct LiveSessionView: View {
             ZStack {
                 Circle()
                     .fill(Theme.domainColor(viewModel.scenario.domain).opacity(0.20))
-                    .frame(width: 44, height: 44)
+                    .frame(width: 52, height: 52)
                 Image(systemName: Theme.domainIcon(viewModel.scenario.domain))
                     .foregroundStyle(Theme.domainColor(viewModel.scenario.domain))
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(Theme.rowIcon)
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(viewModel.scenario.title).font(Theme.sectionTitle)
                 Text(viewModel.scenario.persona)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.secondaryBody)
+                    .foregroundStyle(Theme.textSecondary)
                     .lineLimit(2)
                 HStack(spacing: 6) {
                     modeBadge
                     if viewModel.isListening {
                         Label("Listening — speak now", systemImage: "waveform")
                             .font(Theme.chip)
-                            .foregroundStyle(.green)
+                            .foregroundStyle(Theme.success)
                             .symbolEffect(.variableColor.iterative, isActive: true)
                     } else if viewModel.isProcessing {
                         Label("Working...", systemImage: "ellipsis")
@@ -58,7 +58,7 @@ public struct LiveSessionView: View {
                     } else if viewModel.isActive {
                         Label("Your turn", systemImage: "circle.fill")
                             .font(Theme.chip)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
             }
@@ -75,7 +75,7 @@ public struct LiveSessionView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Label("Watching for your recurring mistakes", systemImage: "scope")
                     .font(Theme.chip)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                 FlowingChips(weakSpots: viewModel.activeWeakSpots)
             }
             .padding(.horizontal, 18)
@@ -126,19 +126,21 @@ public struct LiveSessionView: View {
                     viewModel.isListening ? "Stop & send" : "Push to talk",
                     systemImage: viewModel.isListening ? "stop.fill" : "mic.fill"
                 )
-                .frame(minWidth: 180)
+                .frame(minWidth: 200)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .tint(viewModel.isListening ? .red : Theme.brand)
+            .tint(viewModel.isListening ? Theme.danger : Theme.brand)
             .keyboardShortcut(.space, modifiers: [])
             .disabled(!viewModel.isActive || viewModel.isProcessing)
 
             Text(viewModel.isListening
                  ? "Tap again when you're done — or just pause and it sends itself."
                  : "Tap to record your reply. Space works too.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.caption)
+                .foregroundStyle(Theme.textSecondary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
 
@@ -193,12 +195,12 @@ private struct FlowingChips: View {
         let color = Theme.correctionColor(weakSpot.category)
         return HStack(spacing: 4) {
             Image(systemName: Theme.correctionIcon(weakSpot.category))
-                .font(.system(size: 9))
+                .font(Theme.inlineIcon)
             Text(weakSpot.pattern)
                 .lineLimit(1)
             if weakSpot.occurrenceCount > 1 {
                 Text("\(weakSpot.occurrenceCount)x")
-                    .font(.system(size: 9, design: .rounded).weight(.bold))
+                    .font(Theme.microLabel)
                     .opacity(0.75)
             }
         }
@@ -220,17 +222,22 @@ private struct TurnBubbleView: View {
             if turn.speaker == .ai { avatar }
             VStack(alignment: turn.speaker == .user ? .trailing : .leading, spacing: 6) {
                 Text(turn.speaker == .user ? "You" : "AI")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(Theme.caption).foregroundStyle(Theme.textSecondary)
                 Text(highlightedText)
-                    .padding(.horizontal, 12).padding(.vertical, 9)
-                    .background(turn.speaker == .user ? Theme.brand.opacity(0.18) : Theme.cardSurface)
-                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 14).padding(.vertical, 11)
+                    .background(turn.speaker == .user ? Theme.brand.opacity(0.13) : Theme.cardSurface)
+                    .foregroundStyle(Theme.textPrimary)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(turn.speaker == .user ? Theme.brand.opacity(0.28) : Theme.separator,
+                                    lineWidth: 1)
+                    )
                 ForEach(turn.corrections.indices, id: \.self) { i in
                     correctionRow(turn.corrections[i])
                 }
             }
-            .frame(maxWidth: 480, alignment: turn.speaker == .user ? .trailing : .leading)
+            .frame(maxWidth: 560, alignment: turn.speaker == .user ? .trailing : .leading)
             if turn.speaker == .user { avatar }
             if turn.speaker == .ai { Spacer(minLength: 40) }
         }
@@ -239,10 +246,10 @@ private struct TurnBubbleView: View {
     private var avatar: some View {
         ZStack {
             Circle()
-                .fill(turn.speaker == .user ? Theme.brand.opacity(0.18) : Color.gray.opacity(0.15))
-                .frame(width: 28, height: 28)
+                .fill(turn.speaker == .user ? Theme.brand.opacity(0.18) : Theme.separator.opacity(0.55))
+                .frame(width: 34, height: 34)
             Image(systemName: turn.speaker == .user ? "person.fill" : "sparkles")
-                .font(.caption)
+                .font(Theme.caption)
                 .foregroundStyle(turn.speaker == .user ? Theme.brand : .secondary)
         }
     }
@@ -252,13 +259,13 @@ private struct TurnBubbleView: View {
         return HStack(alignment: .top, spacing: 6) {
             Image(systemName: Theme.correctionIcon(correction.category))
                 .foregroundStyle(color)
-                .font(.caption)
+                .font(Theme.caption)
             VStack(alignment: .leading, spacing: 1) {
                 Text(Theme.correctionLabel(correction.category).uppercased())
-                    .font(.system(size: 9, design: .rounded).weight(.bold))
+                    .font(Theme.microLabel)
                     .foregroundStyle(color)
                 Text(correction.message)
-                    .font(.caption)
+                    .font(Theme.caption)
                     .foregroundStyle(color)
             }
         }

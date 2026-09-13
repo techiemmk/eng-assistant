@@ -14,14 +14,14 @@ public struct OnboardingView: View {
             // Brand hero
             VStack(spacing: 14) {
                 Image(systemName: Theme.appIconSymbol)
-                    .font(.system(size: 56, weight: .semibold))
+                    .font(Theme.heroIcon)
                     .foregroundStyle(.white)
                 Text("Welcome to \(Theme.appName)")
                     .font(Theme.appTitle)
                     .foregroundStyle(.white)
                 Text("Practice spoken English with a private, on-device AI partner.")
-                    .font(.callout)
-                    .foregroundStyle(.white.opacity(0.85))
+                    .font(Theme.secondaryBody)
+                    .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
@@ -73,7 +73,7 @@ public struct OnboardingView: View {
                         onDone()
                     } label: {
                         Label("Get started", systemImage: "arrow.right")
-                            .frame(minWidth: 120)
+                            .frame(minWidth: 140)
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
@@ -83,7 +83,7 @@ public struct OnboardingView: View {
             }
             .padding(28)
         }
-        .frame(width: 580, height: 620)
+        .frame(width: 660, height: 760)
         .task { await viewModel.runChecks() }
     }
 
@@ -97,17 +97,17 @@ public struct OnboardingView: View {
             ZStack {
                 Circle()
                     .fill(statusBackground(status))
-                    .frame(width: 36, height: 36)
+                    .frame(width: 42, height: 42)
                 statusIcon(status, fallback: icon)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(Theme.rowIcon)
                     .foregroundStyle(statusForeground(status))
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(label).font(.system(.body, design: .rounded, weight: .semibold))
+                Text(label).font(Theme.cardTitle)
                 if case let .failed(msg) = status {
-                    Text(msg).font(.caption).foregroundStyle(.red)
+                    Text(msg).font(Theme.caption).foregroundStyle(Theme.danger)
                 } else {
-                    Text(detail).font(.caption).foregroundStyle(.secondary)
+                    Text(detail).font(Theme.caption).foregroundStyle(Theme.textSecondary)
                 }
             }
             Spacer()
@@ -115,6 +115,7 @@ public struct OnboardingView: View {
         .padding(12)
         .background(Theme.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.separator, lineWidth: 1))
     }
 
     @ViewBuilder
@@ -133,19 +134,19 @@ public struct OnboardingView: View {
 
     private func statusBackground(_ status: OnboardingViewModel.CheckStatus) -> Color {
         switch status {
-        case .unknown: return Color.gray.opacity(0.15)
+        case .unknown: return Theme.separator.opacity(0.55)
         case .running: return Theme.brand.opacity(0.15)
-        case .ok: return Color.green.opacity(0.18)
-        case .failed: return Color.red.opacity(0.18)
+        case .ok: return Theme.success.opacity(0.15)
+        case .failed: return Theme.danger.opacity(0.13)
         }
     }
 
     private func statusForeground(_ status: OnboardingViewModel.CheckStatus) -> Color {
         switch status {
-        case .unknown: return .secondary
+        case .unknown: return Theme.textSecondary
         case .running: return Theme.brand
-        case .ok: return .green
-        case .failed: return .red
+        case .ok: return Theme.success
+        case .failed: return Theme.danger
         }
     }
 }

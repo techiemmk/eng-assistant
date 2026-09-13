@@ -14,7 +14,7 @@ public struct SessionsHistoryView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "clock.fill")
-                    .font(.system(size: 22))
+                    .font(Theme.screenIcon)
                     .foregroundStyle(Theme.brand)
                 Text("Sessions").font(Theme.appTitle)
             }
@@ -63,9 +63,9 @@ private struct SessionRowCard: View {
                 ZStack {
                     Circle()
                         .fill(Theme.brand.opacity(0.15))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 42, height: 42)
                     Image(systemName: "bubble.left.and.bubble.right.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(Theme.rowIcon)
                         .foregroundStyle(Theme.brand)
                 }
                 VStack(alignment: .leading, spacing: 3) {
@@ -74,19 +74,20 @@ private struct SessionRowCard: View {
                     HStack(spacing: 8) {
                         Label(session.startedAt.formatted(date: .abbreviated, time: .shortened),
                               systemImage: "calendar")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.caption)
+                            .foregroundStyle(Theme.textSecondary)
                         statusBadge
                     }
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.caption)
+                    .foregroundStyle(Theme.textSecondary)
             }
             .padding(12)
             .background(Theme.cardSurface)
             .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.separator, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -95,12 +96,12 @@ private struct SessionRowCard: View {
         let color: Color = {
             switch session.status {
             case .active: return Theme.brand
-            case .ended: return .green
-            case .abandoned: return .gray
+            case .ended: return Theme.success
+            case .abandoned: return Theme.textSecondary
             }
         }()
         return Text(session.status.rawValue)
-            .font(.system(.caption2, design: .rounded, weight: .medium))
+            .font(Theme.chip)
             .padding(.horizontal, 6).padding(.vertical, 2)
             .background(color.opacity(0.18))
             .foregroundStyle(color)

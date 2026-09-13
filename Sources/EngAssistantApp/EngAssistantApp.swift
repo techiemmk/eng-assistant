@@ -6,6 +6,7 @@ import Adapters
 @main
 struct EngAssistantApp: App {
     @StateObject private var appState = AppState()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
         WindowGroup(Theme.appName) {
@@ -26,11 +27,28 @@ struct EngAssistantApp: App {
             }
             .tint(Theme.brand)
             .fontDesign(.rounded)
+            // Theme's palette is fixed light values, so the window has to be
+            // light too — otherwise system dark mode would keep rendering the
+            // controls, form backgrounds, and text fields dark around it.
+            .preferredColorScheme(.light)
+            .font(Theme.body)
+            .foregroundStyle(Theme.textPrimary)
+            .background(Theme.mutedSurface)
             .task {
                 await appState.bootstrap()
             }
         }
         .windowResizability(.contentSize)
+    }
+}
+
+/// Exists only to pin the app's appearance. `preferredColorScheme(.light)`
+/// covers the SwiftUI content, but the window titlebar and menus follow the
+/// *app* appearance — so on a Mac set to dark, a light window would sit under a
+/// dark titlebar.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.appearance = NSAppearance(named: .aqua)
     }
 }
 
@@ -88,14 +106,14 @@ struct BootstrapErrorView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 12) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(.red)
+                    .font(Theme.screenIcon)
+                    .foregroundStyle(Theme.danger)
                 Text("\(Theme.appName) couldn't start")
                     .font(Theme.sectionTitle)
             }
             Text(message)
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(Theme.body)
+                .foregroundStyle(Theme.textSecondary)
             HStack {
                 Spacer()
                 Button("Quit") {
@@ -106,6 +124,6 @@ struct BootstrapErrorView: View {
             }
         }
         .padding(28)
-        .frame(width: 480, height: 260)
+        .frame(width: 580, height: 320)
     }
 }

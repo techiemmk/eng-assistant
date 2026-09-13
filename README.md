@@ -62,6 +62,16 @@ First launch: right-click the app in Finder → Open (Gatekeeper bypass for unsi
         └── plans/                  6 implementation plans (v1 milestones)
 ```
 
+## Look and feel
+
+Fixed light appearance, pinned in both the SwiftUI content and the app
+appearance so a Mac set to dark mode doesn't render a dark titlebar around a
+light window. The type scale runs noticeably larger than macOS defaults (17pt
+body rather than 13pt); `Theme.textScale` in
+[`Sources/EngAssistantApp/Theme.swift`](Sources/EngAssistantApp/Theme.swift) is
+the one knob if you want it larger or smaller again. Every accent colour is
+held to a 4.5:1 contrast ratio on a white card by tests rather than by eye.
+
 ## Architecture at a glance
 
 A layered, protocol-driven design:

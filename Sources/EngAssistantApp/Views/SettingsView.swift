@@ -12,7 +12,7 @@ public struct SettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "gearshape.fill")
-                    .font(.system(size: 22))
+                    .font(Theme.screenIcon)
                     .foregroundStyle(Theme.brand)
                 Text("Settings").font(Theme.appTitle)
             }
@@ -50,12 +50,12 @@ public struct SettingsView: View {
                         Spacer()
                         if viewModel.isSTTConfigured {
                             Label("Configured", systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                                .font(.caption)
+                                .foregroundStyle(Theme.success)
+                                .font(Theme.caption)
                         } else {
                             Label("Not configured — the app can't hear you yet", systemImage: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
-                                .font(.caption)
+                                .foregroundStyle(Theme.warning)
+                                .font(Theme.caption)
                         }
                     }
                 } header: {
@@ -64,8 +64,8 @@ public struct SettingsView: View {
                 } footer: {
                     Text("Install with `brew install whisper-cpp`, then drop a ggml model into "
                          + "~/Library/Application Support/EngAssistant/models/ and hit Auto-detect.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.caption)
+                        .foregroundStyle(Theme.textSecondary)
                 }
 
                 Section {
@@ -106,13 +106,13 @@ public struct SettingsView: View {
                     }
                     if let n = viewModel.savedNotice {
                         Label(n, systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                            .font(.caption)
+                            .foregroundStyle(Theme.success)
+                            .font(Theme.caption)
                     }
                     if let e = viewModel.lastError {
                         Label(e, systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
-                            .font(.caption)
+                            .foregroundStyle(Theme.danger)
+                            .font(Theme.caption)
                     }
                 }
             }

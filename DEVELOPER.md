@@ -185,6 +185,18 @@ extension's `false` and wait for the second tap).
 what the UI renders — add new adapter errors as `LocalizedError` and it picks up
 `errorDescription` for free.
 
+**Type scale and palette live only in `Theme`.** Views must not reach for
+`.font(.caption)` or `.foregroundStyle(.secondary)`: the first makes text size
+untunable, and the second resolves against the system appearance, which fights a
+fixed light palette. `Theme.textScale` is the single knob for overall text size,
+and `Theme.Size` exposes the point values separately from the `Font` values
+because `Font` is opaque — `ThemeTypeScaleTests` asserts on those numbers.
+The app is pinned light in two places: `preferredColorScheme(.light)` for the
+SwiftUI content, and `NSApp.appearance = .aqua` in `AppDelegate` for the
+titlebar and menus, which follow the app appearance rather than the view tree.
+`ThemeLightPaletteTests` holds every accent to 4.5:1 against a white card, which
+is what forced the original dark-background accents to be darkened.
+
 **Coach mode's feedback path.** `PersonaBuilder` asks for
 `[[coach:<category>: try 'X' instead of 'Y']]` (or `drop 'Y'` for deletions) and
 appends the user's `activeWeakSpots` so the model targets recurring mistakes;

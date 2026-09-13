@@ -26,10 +26,10 @@ public struct ContentView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
                     Image(systemName: Theme.appIconSymbol)
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(Theme.screenIcon)
                         .foregroundStyle(Theme.brand)
                     Text(Theme.appName)
-                        .font(.system(.headline, design: .rounded, weight: .semibold))
+                        .font(Theme.cardTitle)
                 }
                 .padding(.horizontal, 14)
                 .padding(.top, 14)
@@ -42,7 +42,7 @@ public struct ContentView: View {
                 }
                 .listStyle(.sidebar)
             }
-            .navigationSplitViewColumnWidth(min: 200, ideal: 230)
+            .navigationSplitViewColumnWidth(min: 230, ideal: 265)
         } detail: {
             switch selection {
             case .practice:

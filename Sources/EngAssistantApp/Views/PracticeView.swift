@@ -17,8 +17,8 @@ public struct PracticeView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Practice").font(Theme.appTitle)
                     Text("Pick a scenario, choose a mode, and start talking.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.secondaryBody)
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
                 Picker("Mode", selection: $viewModel.mode) {
@@ -26,7 +26,7 @@ public struct PracticeView: View {
                     Label("Coach", systemImage: "lightbulb.fill").tag(SessionMode.coach)
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 240)
+                .frame(width: 290)
             }
 
             // Domain filters
@@ -59,8 +59,8 @@ public struct PracticeView: View {
                         Image(systemName: Theme.domainIcon(s.domain))
                             .foregroundStyle(Theme.domainColor(s.domain))
                         Text("Ready: \(s.title)")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.secondaryBody)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 Spacer()
@@ -70,7 +70,7 @@ public struct PracticeView: View {
                     }
                 } label: {
                     Label("Start session", systemImage: "play.fill")
-                        .frame(minWidth: 140)
+                        .frame(minWidth: 160)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -111,16 +111,16 @@ private struct ScenarioCardView: View {
                 Text(scenario.title)
                     .font(Theme.cardTitle)
                 Text(scenario.persona)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.secondaryBody)
+                    .foregroundStyle(Theme.textSecondary)
                     .lineLimit(3)
                 if !scenario.tags.isEmpty {
                     HStack(spacing: 6) {
                         ForEach(scenario.tags.prefix(3), id: \.self) { tag in
                             Text(tag)
-                                .font(.caption2)
+                                .font(Theme.caption)
                                 .padding(.horizontal, 6).padding(.vertical, 2)
-                                .background(.gray.opacity(0.15))
+                                .background(Theme.separator.opacity(0.55))
                                 .clipShape(Capsule())
                         }
                     }
@@ -134,7 +134,8 @@ private struct ScenarioCardView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Theme.brand : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? Theme.brand : Theme.separator,
+                            lineWidth: isSelected ? 2 : 1)
             )
             .shadow(color: isSelected ? Theme.brand.opacity(0.25) : .black.opacity(0.04), radius: isSelected ? 6 : 2, y: isSelected ? 3 : 1)
             .animation(.easeInOut(duration: 0.15), value: isSelected)
@@ -158,7 +159,7 @@ private struct ScenarioCardView: View {
         HStack(spacing: 3) {
             ForEach(1...5, id: \.self) { i in
                 Circle()
-                    .fill(i <= scenario.difficulty ? Theme.brand : Color.gray.opacity(0.25))
+                    .fill(i <= scenario.difficulty ? Theme.brand : Theme.separator)
                     .frame(width: 6, height: 6)
             }
         }

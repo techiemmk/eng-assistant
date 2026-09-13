@@ -13,7 +13,7 @@ public struct DebriefView: View {
             VStack(alignment: .leading, spacing: 22) {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 28))
+                        .font(Theme.screenIcon)
                         .foregroundStyle(Theme.brand)
                     Text("Debrief").font(Theme.appTitle)
                 }
@@ -22,16 +22,16 @@ public struct DebriefView: View {
                     HStack(spacing: 10) {
                         ProgressView().controlSize(.regular)
                         Text("Analyzing your session...")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 } else if let err = viewModel.lastError {
                     Label(err, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.danger)
                 } else if let debrief = viewModel.debrief {
                     sectionsFor(debrief)
                 } else {
                     Text("No debrief loaded.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
             .padding(20)
@@ -84,7 +84,7 @@ public struct DebriefView: View {
                 ForEach(debrief.suggestedDrills, id: \.self) { drill in
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "circle.fill")
-                            .font(.system(size: 5))
+                            .font(Theme.icon(6, weight: .bold))
                             .foregroundStyle(Theme.brand)
                             .padding(.top, 7)
                         Text(drill)
@@ -95,6 +95,7 @@ public struct DebriefView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.cardSurface)
             .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.separator, lineWidth: 1))
         }
 
         if !debrief.allTurns.isEmpty {
@@ -103,9 +104,9 @@ public struct DebriefView: View {
                 ForEach(debrief.allTurns) { turn in
                     HStack(alignment: .top, spacing: 10) {
                         Text(turn.speaker == .user ? "You" : "AI")
-                            .font(.system(.caption, design: .rounded, weight: .semibold))
+                            .font(Theme.captionBold)
                             .foregroundStyle(turn.speaker == .user ? Theme.brand : .secondary)
-                            .frame(width: 36, alignment: .leading)
+                            .frame(width: 46, alignment: .leading)
                         Text(turn.text)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -133,35 +134,37 @@ public struct DebriefView: View {
                 Spacer()
             }
             Text(value).font(Theme.metricNumber)
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(label).font(Theme.caption).foregroundStyle(Theme.textSecondary)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.separator, lineWidth: 1))
     }
 
     private func weakSpotRow(_ ws: WeakSpot, leadingIcon: String, trailing: String? = nil) -> some View {
         HStack(spacing: 10) {
             Image(systemName: leadingIcon)
-                .font(.caption)
+                .font(Theme.caption)
                 .foregroundStyle(Theme.brand)
-                .frame(width: 18)
+                .frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
                 Text(ws.pattern)
                 Text(ws.category.rawValue)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.caption)
+                    .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
             if let t = trailing {
                 Text(t)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.caption)
+                    .foregroundStyle(Theme.textSecondary)
             }
         }
         .padding(12)
         .background(Theme.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.separator, lineWidth: 1))
     }
 }
