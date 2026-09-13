@@ -5,6 +5,11 @@ import Core
 /// runs migrations, loads settings and the scenario catalog, and sweeps old
 /// audio. That work is usually near-instant, so the view is held for a minimum
 /// duration (see `AppState.launchHold`) rather than flashing past.
+///
+/// Everything here is static except the spinner. A splash screen is the first
+/// impression, and animated wording — a pulsing mark, a label whose dots grow
+/// and shrink — reads as restless rather than polished. The standard
+/// indeterminate indicator is enough to say work is happening.
 struct LaunchView: View {
     var body: some View {
         VStack(spacing: 0) {
@@ -14,9 +19,6 @@ struct LaunchView: View {
                 Image(systemName: Theme.appIconSymbol)
                     .font(Theme.heroIcon)
                     .foregroundStyle(.white)
-                    // A slow, single pulse — the wait is short, so a busy
-                    // animation here would read as a problem.
-                    .symbolEffect(.pulse, options: .repeating)
 
                 Text(Theme.appName)
                     .font(Theme.appTitle)
@@ -31,12 +33,14 @@ struct LaunchView: View {
 
             Spacer()
 
-            ActivityLabel(
-                text: "Getting things ready",
-                systemImage: "circle.dotted",
-                color: .white,
-                font: Theme.secondaryBody
-            )
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(.white)
+                Text("Getting things ready")
+                    .font(Theme.secondaryBody)
+                    .foregroundStyle(.white.opacity(0.95))
+            }
             .padding(.bottom, 40)
         }
         .frame(width: 620, height: 460)

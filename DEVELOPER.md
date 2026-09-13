@@ -229,6 +229,16 @@ contains that track. The track tags are kept **disjoint** — a scenario carries
 at most one — so the chips partition the catalog rather than overlapping;
 `HomeopathyScenarioTests.trackTagsDoNotOverlap` enforces that.
 
+**Status labels must not move their own text.** `ActivityLabel` keeps the words
+outside its `TimelineView` and animates only three fixed-size dots by opacity.
+An earlier version animated the whole row and grew a "•" string from one dot to
+three; SwiftUI can't interpolate text, so it crossfaded the label, and the
+growing string reflowed everything beside it — the words visibly danced. The
+reserved dot width was also a hardcoded 18pt, which three glyphs overflow at
+anything above the default font size. `LaunchView` goes further and is entirely
+static apart from a standard indeterminate `ProgressView`: a splash screen is
+the first impression, and animated wording there reads as restless.
+
 **The launch screen is a deliberate pause.** `AppState.bootstrap` measures its
 own elapsed time and sleeps only the remainder of `launchHold` (3s), so a slow
 first launch running migrations doesn't pay the hold on top of its own work. A
