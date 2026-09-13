@@ -37,7 +37,7 @@ public struct SettingsView: View {
                     Label("Appearance", systemImage: "paintbrush.fill")
                         .font(Theme.cardTitle)
                 } footer: {
-                    Text("System follows your Mac's light/dark setting.")
+                    Text("Applied straight away — no need to save.")
                         .font(Theme.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }

@@ -93,7 +93,7 @@ import Core
             audioRetentionDays: 30,
             sttExecutablePath: "",
             sttModelPath: "",
-            appearance: .system
+            appearance: .light
         )
         #expect(store.modelName == AppDefaults.llmModelName)
     }

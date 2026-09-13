@@ -15,6 +15,7 @@ import Core
             sessions[i].status = .active
             sessions[i].endedAt = nil
         }
+        func delete(id: UUID) throws { sessions.removeAll { $0.id == id } }
         func listActive() throws -> [Session] { sessions.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] {
             Array(sessions.sorted { $0.startedAt > $1.startedAt }.prefix(limit))

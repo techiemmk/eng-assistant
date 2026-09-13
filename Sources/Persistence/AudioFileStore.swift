@@ -21,4 +21,11 @@ public struct AudioFileStore: AudioFilePersisting {
         }
         return absolute
     }
+
+    public func deleteAll(forSession sessionId: UUID) throws {
+        let sessionDir = layout.audioDirectory
+            .appendingPathComponent(sessionId.uuidString, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: sessionDir.path) else { return }
+        try FileManager.default.removeItem(at: sessionDir)
+    }
 }

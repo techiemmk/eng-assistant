@@ -29,6 +29,7 @@ import Fakes
             s.endedAt = nil
             sessions[id] = s
         }
+        func delete(id: UUID) throws { sessions[id] = nil }
         func listActive() throws -> [Session] { sessions.values.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] {
             Array(sessions.values.sorted { $0.startedAt > $1.startedAt }.prefix(limit))
@@ -157,6 +158,7 @@ import Fakes
         func find(id: UUID) throws -> Session? { sessions.first { $0.id == id } }
         func finalize(id: UUID, endedAt: Date, summary: String?) throws {}
         func reactivate(id: UUID) throws {}
+        func delete(id: UUID) throws { sessions.removeAll { $0.id == id } }
         func listActive() throws -> [Session] { sessions.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] { Array(sessions.prefix(limit)) }
     }

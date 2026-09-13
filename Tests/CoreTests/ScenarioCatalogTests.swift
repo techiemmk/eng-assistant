@@ -76,3 +76,55 @@ import Testing
         #expect(office.count >= 2)
     }
 }
+
+
+/// Homeopathy is its own practice track, kept disjoint from the clinical one so
+/// the two filter chips partition the catalog instead of overlapping.
+@Suite struct HomeopathyScenarioTests {
+    private static func catalog() throws -> ScenarioCatalog {
+        try ScenarioCatalog.loadBuiltIn()
+    }
+
+    @Test func homeopathyScenariosExist() throws {
+        let scenarios = try Self.catalog().scenarios(withTag: "homeopathy")
+        #expect(scenarios.count >= 5, "only \(scenarios.count) homeopathy scenarios")
+    }
+
+    @Test func homeopathyScenariosSitInTheWorkDomain() throws {
+        let scenarios = try Self.catalog().scenarios(withTag: "homeopathy")
+        #expect(scenarios.allSatisfy { $0.domain == .work })
+    }
+
+    /// If a scenario carried both track tags it would show under both chips,
+    /// which defeats the point of having two.
+    @Test func trackTagsDoNotOverlap() throws {
+        let catalog = try Self.catalog()
+        let medical = Set(catalog.scenarios(withTag: "medical").map(\.id))
+        let homeopathy = Set(catalog.scenarios(withTag: "homeopathy").map(\.id))
+        #expect(medical.isDisjoint(with: homeopathy))
+    }
+
+    @Test func homeopathyScenariosAreFullySpecified() throws {
+        for scenario in try Self.catalog().scenarios(withTag: "homeopathy") {
+            #expect(!scenario.title.isEmpty)
+            #expect(scenario.persona.count > 80, "\(scenario.id) persona is thin")
+            #expect(scenario.openingLine.count > 20, "\(scenario.id) opening line is thin")
+            #expect((1...5).contains(scenario.difficulty), "\(scenario.id) difficulty out of range")
+            #expect(scenario.notes?.isEmpty == false, "\(scenario.id) has no practice note")
+        }
+    }
+
+    @Test func homeopathyScenariosSpanARangeOfDifficulty() throws {
+        let levels = Set(try Self.catalog().scenarios(withTag: "homeopathy").map(\.difficulty))
+        #expect(levels.count >= 3, "homeopathy difficulties collapse to \(levels)")
+    }
+
+    /// The consultation set should cover more than one kind of conversation —
+    /// a first case-taking, a follow-up, and a professional exchange are
+    /// different language problems.
+    @Test func homeopathyScenariosCoverDistinctConversationTypes() throws {
+        let scenarios = try Self.catalog().scenarios(withTag: "homeopathy")
+        let secondaryTags = Set(scenarios.flatMap(\.tags)).subtracting(["homeopathy"])
+        #expect(secondaryTags.count >= 4, "only \(secondaryTags.count) distinct kinds")
+    }
+}

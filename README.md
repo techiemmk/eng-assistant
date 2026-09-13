@@ -10,15 +10,21 @@ A native macOS app for practicing **advanced English conversation** with a local
 
 You pick a scenario (work standup, patient consultation, conference small talk, dinner with friends, etc.) or describe one yourself. The app plays the AI persona's opening line, you push to talk (the mic stays open until you tap again or pause for ~1.5s), the AI responds in character. After you end the session, it analyzes the transcript and gives you a debrief: per-turn metrics, recurring weak spots it noticed across sessions, and suggested drills for next time.
 
-Scenarios are grouped by domain — work, networking, social — plus a **Medical**
-track inside work for clinicians: taking a patient history, explaining a
-diagnosis in plain English, clinical handover, a difficult conversation with a
-family member, and presenting at an MDT meeting.
+Scenarios are grouped by domain — work, networking, social — plus two
+practitioner tracks inside work:
+
+- **Medical** — taking a patient history, explaining a diagnosis in plain
+  English, clinical handover, a difficult conversation with a family member,
+  presenting at an MDT meeting.
+- **Homeopathy** — constitutional case-taking, explaining remedies and potencies
+  to a sceptic, assessing a follow-up response, holding a boundary with a patient
+  who wants to stop their prescription, and explaining your approach to a GP.
 
 You can also **continue** a past conversation instead of starting over: the
 Sessions list has a Continue button on every row, which reopens that session and
 replays its turns back into the model's context, so the persona picks up where
-it left off rather than greeting you again.
+it left off rather than greeting you again. Sessions can be deleted from the same
+list — the transcript and its recordings go with them.
 
 Two modes:
 - **Flow** — AI stays in character, never breaks; feedback comes only at the debrief.
@@ -74,10 +80,11 @@ First launch: right-click the app in Finder → Open (Gatekeeper bypass for unsi
 
 ## Look and feel
 
-Light, dark, or follow-the-Mac, switchable in **Settings > Appearance** and
-applied the moment you pick it. Every colour is a light/dark pair, and tests
-hold each variant to a 4.5:1 contrast ratio against its own card surface rather
-than trusting the eye. The type scale runs noticeably larger than macOS defaults
+Light or dark, switchable in **Settings > Appearance** and applied the moment you
+pick it; light is the default. There's deliberately no "follow the system"
+option — the app picks one so the look doesn't change under you when macOS flips
+at sunset. Every colour is a light/dark pair, and tests hold each variant to a
+4.5:1 contrast ratio against its own card surface rather than trusting the eye. The type scale runs noticeably larger than macOS defaults
 (17pt body rather than 13pt); `Theme.textScale` in
 [`Sources/EngAssistantApp/Theme.swift`](Sources/EngAssistantApp/Theme.swift) is
 the one knob if you want it larger or smaller again.

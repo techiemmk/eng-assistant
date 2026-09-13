@@ -22,6 +22,7 @@ import Fakes
             s.endedAt = nil
             sessions[id] = s
         }
+        func delete(id: UUID) throws { sessions[id] = nil }
         func listActive() throws -> [Session] { Array(sessions.values) }
         func listRecent(limit: Int) throws -> [Session] {
             Array(sessions.values.sorted { $0.startedAt > $1.startedAt }.prefix(limit))

@@ -19,6 +19,7 @@ final class InMemorySessionPersister: SessionPersisting, @unchecked Sendable {
         s.endedAt = nil
         sessions[id] = s
     }
+    func delete(id: UUID) throws { sessions[id] = nil }
     func listActive() throws -> [Session] {
         sessions.values.filter { $0.status == .active }
     }
@@ -46,6 +47,11 @@ final class InMemoryAudioFilePersister: AudioFilePersisting, @unchecked Sendable
     func write(audio: Data, sessionId: UUID, turnIndex: Int, speaker: Speaker) throws -> String {
         written.append((sessionId, turnIndex, speaker, audio.count))
         return "audio/\(sessionId.uuidString)/\(speaker.rawValue)-turn-\(String(format: "%03d", turnIndex)).wav"
+    }
+    var deletedSessions: [UUID] = []
+    func deleteAll(forSession sessionId: UUID) throws {
+        deletedSessions.append(sessionId)
+        written.removeAll { $0.sessionId == sessionId }
     }
 }
 

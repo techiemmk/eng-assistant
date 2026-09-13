@@ -61,6 +61,16 @@ public final class SessionRepository {
         }
     }
 
+    /// Turns are deleted explicitly rather than left to the schema's ON DELETE
+    /// CASCADE: that only fires when SQLite's foreign_keys pragma is on, and
+    /// one transaction here is cheaper than depending on a connection setting.
+    public func delete(id: UUID) throws {
+        try database.queue.write { db in
+            try db.execute(sql: "DELETE FROM turns WHERE session_id = ?", arguments: [id.uuidString])
+            try db.execute(sql: "DELETE FROM sessions WHERE id = ?", arguments: [id.uuidString])
+        }
+    }
+
     public func listActive() throws -> [Session] {
         try database.queue.read { db in
             try Row.fetchAll(db, sql: "SELECT * FROM sessions WHERE status = 'active'")

@@ -6,6 +6,10 @@ public struct SessionsHistoryView: View {
     let onOpenDebrief: (UUID) -> Void
     let onContinue: (Session) -> Void
 
+    /// The session awaiting a yes/no on deletion. Deleting a conversation and
+    /// its recordings can't be undone, so it always asks first.
+    @State private var pendingDeletion: Session?
+
     public init(
         viewModel: SessionsHistoryViewModel,
         onOpenDebrief: @escaping (UUID) -> Void,
@@ -53,7 +57,8 @@ public struct SessionsHistoryView: View {
                                 title: viewModel.title(for: session),
                                 canContinue: viewModel.canContinue(session),
                                 onTap: { onOpenDebrief(session.id) },
-                                onContinue: { onContinue(session) }
+                                onContinue: { onContinue(session) },
+                                onDelete: { pendingDeletion = session }
                             )
                         }
                     }
@@ -65,6 +70,25 @@ public struct SessionsHistoryView: View {
         .task {
             try? await viewModel.load()
         }
+        .alert(
+            "Delete this session?",
+            isPresented: Binding(
+                get: { pendingDeletion != nil },
+                set: { if !$0 { pendingDeletion = nil } }
+            ),
+            presenting: pendingDeletion
+        ) { session in
+            Button("Delete", role: .destructive) {
+                let target = session
+                pendingDeletion = nil
+                Task { await viewModel.delete(target) }
+            }
+            Button("Cancel", role: .cancel) { pendingDeletion = nil }
+        } message: { session in
+            Text("\(viewModel.title(for: session)) from "
+                 + session.startedAt.formatted(date: .abbreviated, time: .shortened)
+                 + " will be removed, along with its transcript and recordings. This can't be undone.")
+        }
     }
 }
 
@@ -74,6 +98,7 @@ private struct SessionRowCard: View {
     let canContinue: Bool
     let onTap: () -> Void
     let onContinue: () -> Void
+    let onDelete: () -> Void
 
     var body: some View {
         Button(action: onTap) {
@@ -107,6 +132,13 @@ private struct SessionRowCard: View {
                 .help(canContinue
                       ? "Pick this conversation up where it left off"
                       : "This scenario is no longer in the catalog")
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(Theme.caption)
+                }
+                .buttonStyle(.bordered)
+                .tint(Theme.danger)
+                .help("Delete this session, its transcript and its recordings")
                 Image(systemName: "chevron.right")
                     .font(Theme.caption)
                     .foregroundStyle(Theme.textSecondary)

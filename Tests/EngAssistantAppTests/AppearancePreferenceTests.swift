@@ -18,11 +18,17 @@ import Core
         executableCandidates: []
     )
 
-    @Test func defaultsToFollowingTheSystem() {
+    /// Light is the default, and there is no "follow the Mac" option — the app
+    /// always picks one.
+    @Test func defaultsToLight() {
         let store = AppSettingsStore(persister: InMemoryPersister())
         store.reload(autodetect: Self.noLocator)
-        #expect(store.appearance == .system)
-        #expect(AppDefaults.appearance == .system)
+        #expect(store.appearance == .light)
+        #expect(AppDefaults.appearance == .light)
+    }
+
+    @Test func onlyLightAndDarkAreOffered() {
+        #expect(AppearancePreference.allCases == [.light, .dark])
     }
 
     @Test func reloadRestoresASavedPreference() {
@@ -33,12 +39,16 @@ import Core
         #expect(store.appearance == .dark)
     }
 
-    @Test func reloadIgnoresAnUnrecognisedValue() {
-        let persister = InMemoryPersister()
-        persister.store[AppSettingKey.appearance.rawValue] = "sepia"
-        let store = AppSettingsStore(persister: persister)
-        store.reload(autodetect: Self.noLocator)
-        #expect(store.appearance == .system)
+    /// Covers a database written before the System option was removed, as well
+    /// as anything else unrecognised.
+    @Test func reloadFallsBackToLightForAnUnrecognisedValue() {
+        for stored in ["system", "sepia", ""] {
+            let persister = InMemoryPersister()
+            persister.store[AppSettingKey.appearance.rawValue] = stored
+            let store = AppSettingsStore(persister: persister)
+            store.reload(autodetect: Self.noLocator)
+            #expect(store.appearance == .light, "'\(stored)' should fall back to light")
+        }
     }
 
     /// Picking a theme applies and persists immediately — you're choosing it by
@@ -81,19 +91,14 @@ import Core
         #expect(vm.appearance == .light)
     }
 
-    /// `nil` is how AppKit spells "don't override", which is what makes the
-    /// System option actually follow the Mac.
-    @Test func systemMapsToNoOverride() {
-        #expect(AppearancePreference.system.nsAppearance == nil)
-    }
-
-    @Test func lightAndDarkMapToConcreteAppearances() {
-        #expect(AppearancePreference.light.nsAppearance?.name == .aqua)
-        #expect(AppearancePreference.dark.nsAppearance?.name == .darkAqua)
+    /// Both map to a concrete AppKit appearance — nothing is left to the Mac.
+    @Test func bothOptionsMapToConcreteAppearances() {
+        #expect(AppearancePreference.light.nsAppearance.name == .aqua)
+        #expect(AppearancePreference.dark.nsAppearance.name == .darkAqua)
     }
 
     @Test func everyOptionIsOfferableInTheUI() {
-        #expect(AppearancePreference.allCases.count == 3)
+        #expect(AppearancePreference.allCases.count == 2)
         for option in AppearancePreference.allCases {
             #expect(!option.label.isEmpty)
             #expect(!option.iconName.isEmpty)
@@ -151,11 +156,11 @@ import Core
         #expect(recorder.applied == [.dark])
     }
 
-    @Test func launchingWithNoPreferenceFollowsTheSystem() {
+    @Test func launchingWithNoPreferenceAppliesLight() {
         let recorder = AppearanceRecorder()
         let store = AppSettingsStore(persister: InMemoryPersister(), applyAppearance: recorder.applier)
         store.reload(autodetect: Self.noLocator)
-        #expect(recorder.applied == [.system])
+        #expect(recorder.applied == [.light])
     }
 
     /// Saving the Settings form is the other path a theme can change through.
@@ -172,9 +177,7 @@ import Core
         #expect(recorder.applied.last == .light)
     }
 
-    /// The production applier maps onto AppKit's own "no override" spelling.
-    @Test func systemMeansNoAppKitOverride() {
-        #expect(AppearancePreference.system.nsAppearance == nil)
-        #expect(AppearancePreference.dark.nsAppearance?.name == .darkAqua)
+    @Test func darkMapsToAppKitDarkAqua() {
+        #expect(AppearancePreference.dark.nsAppearance.name == .darkAqua)
     }
 }

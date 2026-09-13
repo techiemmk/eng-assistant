@@ -120,6 +120,10 @@ If the build fails with `command not found: swift`, return to Step 1 and confirm
 
 ## Step 6: First launch
 
+On every launch the app shows a branded loading screen for about three seconds
+while it opens the database, runs migrations, loads settings and the scenario
+catalog, and sweeps expired audio.
+
 Because the app isn't code-signed, macOS Gatekeeper will block the first launch. **Right-click** `EngAssistant.app` in Finder, choose **Open**, and confirm in the dialog. After this once-only step, you can launch it normally.
 
 ```bash
@@ -145,9 +149,9 @@ When the first three are green, click **Get started**. The wizard will not run a
 
 You're at the Practice screen.
 
-1. Click a scenario card (e.g. "Daily Engineering Standup", or one of the
-   **Medical** track cards if you're a clinician — patient consultation,
-   explaining a diagnosis, clinical handover, and so on)
+1. Click a scenario card. The chips above the grid filter by domain (Work,
+   Networking, Social) or by practitioner track — **Medical** for clinicians
+   and **Homeopathy** for homeopathic practice
 2. Pick **Flow** (no corrections during conversation) or **Coach** (inline corrections, labelled by category, with the wording you got wrong underlined in your transcript — and your recurring weak spots from past sessions targeted specifically)
 3. Click **Start Session**
 4. The AI plays its opening line through your speakers. Click **Push to talk** (or press Space) and speak. The mic stays open — click **Stop & send** when you're done, or just pause for about a second and a half and the app sends the turn itself.
@@ -155,11 +159,13 @@ You're at the Practice screen.
 6. The Debrief screen runs analysis: per-turn metrics, new vs recurring weak spots, suggested drills
 
 The **Sessions** sidebar shows all your past sessions. Click a row to revisit its
-debrief, or hit **Continue** to pick that conversation back up — the AI keeps the
-earlier context and carries on instead of greeting you again.
+debrief, hit **Continue** to pick that conversation back up — the AI keeps the
+earlier context and carries on instead of greeting you again — or use the trash
+button to delete it. Deleting asks first, then removes the session, its
+transcript and its recordings; it can't be undone.
 
-The **Settings** sidebar lets you change the theme (light / dark / follow your
-Mac), the LLM model, speech-to-text paths, default mode, and audio retention.
+The **Settings** sidebar lets you change the theme (light or dark), the LLM
+model, speech-to-text paths, default mode, and audio retention.
 
 ---
 

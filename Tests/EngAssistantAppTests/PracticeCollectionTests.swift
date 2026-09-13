@@ -80,10 +80,36 @@ import Core
         #expect(vm.selectedScenarioId == medical.id)
     }
 
+    @Test func offersAChipForTheHomeopathyTrack() throws {
+        let vm = try Self.viewModel()
+        #expect(vm.collections.contains(.tag("homeopathy")))
+    }
+
+    @Test func filteringByHomeopathyExcludesTheClinicalTrack() throws {
+        let vm = try Self.viewModel()
+        vm.collection = .tag("homeopathy")
+        #expect(!vm.filteredScenarios.isEmpty)
+        #expect(vm.filteredScenarios.allSatisfy { $0.tags.contains("homeopathy") })
+        #expect(vm.filteredScenarios.allSatisfy { !$0.tags.contains("medical") })
+    }
+
+    /// Both tracks live in the work domain, so the Work chip has to hold all
+    /// three kinds — office, clinical, homeopathy.
+    @Test func workDomainHoldsEveryTrack() throws {
+        let vm = try Self.viewModel()
+        vm.collection = .domain(.work)
+        #expect(vm.filteredScenarios.contains { $0.tags.contains("medical") })
+        #expect(vm.filteredScenarios.contains { $0.tags.contains("homeopathy") })
+        #expect(vm.filteredScenarios.contains {
+            !$0.tags.contains("medical") && !$0.tags.contains("homeopathy")
+        })
+    }
+
     @Test func chipLabelsAreHumanReadable() throws {
         #expect(PracticeViewModel.Collection.all.label == "All")
         #expect(PracticeViewModel.Collection.domain(.work).label == "Work")
         #expect(PracticeViewModel.Collection.tag("medical").label == "Medical")
+        #expect(PracticeViewModel.Collection.tag("homeopathy").label == "Homeopathy")
     }
 
     /// Collections are used as ForEach identities, so their ids must be stable

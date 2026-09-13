@@ -65,7 +65,9 @@ public final class PracticeViewModel: ObservableObject {
     }
 
     /// Tags that represent a whole practice track rather than a loose label.
-    public static let trackTags = ["medical"]
+    /// Kept disjoint on purpose — a scenario carries one track tag, so the
+    /// chips partition the catalog rather than overlapping.
+    public static let trackTags = ["medical", "homeopathy"]
 
     public var filteredScenarios: [Scenario] {
         switch collection {

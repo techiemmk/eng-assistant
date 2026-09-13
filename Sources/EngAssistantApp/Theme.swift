@@ -219,6 +219,7 @@ public enum Theme {
     public static func tagIcon(_ tag: String) -> String {
         switch tag {
         case "medical": return "stethoscope"
+        case "homeopathy": return "leaf.fill"
         default: return "tag.fill"
         }
     }
@@ -242,14 +243,13 @@ public enum Theme {
 }
 
 public extension AppearancePreference {
-    /// `nil` means "don't override", which is how AppKit spells "follow the
-    /// system setting". Appearance is applied at the application level rather
-    /// than via `preferredColorScheme`, so this is the only mapping needed.
-    var nsAppearance: NSAppearance? {
+    /// Always a concrete appearance — the app never leaves the choice to the
+    /// Mac. Applied at the application level rather than via
+    /// `preferredColorScheme`, so this is the only mapping needed.
+    var nsAppearance: NSAppearance {
         switch self {
-        case .system: return nil
-        case .light: return NSAppearance(named: .aqua)
-        case .dark: return NSAppearance(named: .darkAqua)
+        case .light: return NSAppearance(named: .aqua)!
+        case .dark: return NSAppearance(named: .darkAqua)!
         }
     }
 }

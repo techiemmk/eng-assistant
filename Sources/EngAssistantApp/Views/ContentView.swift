@@ -97,7 +97,11 @@ public struct ContentView: View {
                 DebriefView(viewModel: DebriefViewModel(analyzer: analyzer, sessionId: sessionId))
             case .history:
                 SessionsHistoryView(
-                    viewModel: SessionsHistoryViewModel(persister: container.sessionRepository, catalog: container.scenarioCatalog),
+                    viewModel: SessionsHistoryViewModel(
+                        persister: container.sessionRepository,
+                        audioPersister: container.audioFileStore,
+                        catalog: container.scenarioCatalog
+                    ),
                     onOpenDebrief: { id in selection = .debrief(sessionId: id) },
                     onContinue: { session in
                         selection = .session(

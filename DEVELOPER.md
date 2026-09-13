@@ -195,6 +195,10 @@ separately from the `Font` values because `Font` is opaque —
 **Colours are dynamic pairs, and the theme is applied at the app level.** Each
 token is an `NSColor(name:dynamicProvider:)` that resolves per appearance at
 draw time, which keeps `Theme`'s API static with no environment plumbing.
+`AppearancePreference` is deliberately just `.light` and `.dark` — there is no
+"follow the system" case, so `nsAppearance` is non-optional and the app always
+overrides. A database written before that change can still hold `"system"`;
+`AppSettingsStore.reload` treats any unrecognised value as the default (light).
 The switch itself goes through `NSApp.appearance`, *not*
 `preferredColorScheme` — setting it on the application covers the titlebar and
 menus, which sit outside the SwiftUI tree, and it avoids a trap: the `App` body
@@ -218,9 +222,26 @@ the duration spans the whole conversation. New turns continue the existing
 numbering.
 
 **Scenario collections.** `PracticeViewModel.Collection` is either a domain or a
-tag, because the work domain now holds both office and clinical scenarios. Tags
-that represent a whole track are listed in `PracticeViewModel.trackTags`, and a
-chip only appears if the catalog actually contains that track.
+tag, because the work domain now holds office, clinical and homeopathy
+scenarios. Tags that represent a whole track are listed in
+`PracticeViewModel.trackTags`, and a chip only appears if the catalog actually
+contains that track. The track tags are kept **disjoint** — a scenario carries
+at most one — so the chips partition the catalog rather than overlapping;
+`HomeopathyScenarioTests.trackTagsDoNotOverlap` enforces that.
+
+**The launch screen is a deliberate pause.** `AppState.bootstrap` measures its
+own elapsed time and sleeps only the remainder of `launchHold` (3s), so a slow
+first launch running migrations doesn't pay the hold on top of its own work. A
+bootstrap *failure* skips the hold entirely — no reason to make someone wait to
+read an error. The hold is injectable so tests don't sit through it.
+
+**Deleting a session** removes audio first, then the database rows. That order
+matters: if the audio delete fails the row survives, so the clips are still
+reachable to retry, whereas the reverse would orphan files with nothing pointing
+at them. `SessionRepository.delete` removes turns explicitly rather than relying
+on the schema's `ON DELETE CASCADE`, which only fires when SQLite's
+`foreign_keys` pragma is on — one transaction is cheaper than depending on a
+connection setting.
 
 **Coach mode's feedback path.** `PersonaBuilder` asks for
 `[[coach:<category>: try 'X' instead of 'Y']]` (or `drop 'Y'` for deletions) and

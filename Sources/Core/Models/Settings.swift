@@ -13,16 +13,15 @@ public enum AppSettingKey: String, CaseIterable, Sendable {
     case didCompleteOnboarding = "did_complete_onboarding"
 }
 
-/// Which colour scheme the app renders in. `system` follows the Mac's own
-/// setting; the other two override it.
+/// Which colour scheme the app renders in. Deliberately just the two: the app
+/// always picks one rather than inheriting the Mac's setting, so what you see
+/// doesn't change under you when the system flips at sunset.
 public enum AppearancePreference: String, Codable, Equatable, Sendable, CaseIterable {
-    case system
     case light
     case dark
 
     public var label: String {
         switch self {
-        case .system: return "System"
         case .light: return "Light"
         case .dark: return "Dark"
         }
@@ -30,7 +29,6 @@ public enum AppearancePreference: String, Codable, Equatable, Sendable, CaseIter
 
     public var iconName: String {
         switch self {
-        case .system: return "circle.lefthalf.filled"
         case .light: return "sun.max.fill"
         case .dark: return "moon.fill"
         }
@@ -44,5 +42,5 @@ public enum AppDefaults {
     public static let llmModelName = "qwen2.5:7b-instruct"
     public static let audioRetentionDays = 30
     public static let defaultMode: SessionMode = .flow
-    public static let appearance: AppearancePreference = .system
+    public static let appearance: AppearancePreference = .light
 }

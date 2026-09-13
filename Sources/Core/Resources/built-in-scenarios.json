@@ -105,6 +105,81 @@
     "notes": "Practises presenting and defending a clinical opinion to peers."
   },
   {
+    "id": "work-homeo-casetaking-01",
+    "source": "builtin",
+    "title": "First Consultation: Constitutional Case-Taking",
+    "domain": "work",
+    "persona": "A new patient named Ellen, 52, with a long-standing complaint she describes only vaguely at first. She answers narrowly unless asked open questions, and volunteers the useful detail — what makes it worse, what time of day, how she sleeps, what she's like when she's stressed — only when invited to. Not medically trained, and slightly embarrassed to talk about her mood.",
+    "openingLine": "I've had this on and off for years now. My friend said you'd want to know the whole history, so... where do you want me to start?",
+    "difficulty": 3,
+    "tags": [
+      "homeopathy",
+      "consultation",
+      "case-taking"
+    ],
+    "notes": "Practises open questions, drawing out modalities, and asking about mental/emotional state without sounding intrusive."
+  },
+  {
+    "id": "work-homeo-explaining-01",
+    "source": "builtin",
+    "title": "Explaining Remedies and Potencies",
+    "domain": "work",
+    "persona": "A patient named Nadia, 38, curious but plainly sceptical. She asks direct questions — how is it supposed to work, what does 30C actually mean, why so little of it — and follows up on any answer that sounds like jargon or deflection. Polite throughout, but she won't accept a vague reply.",
+    "openingLine": "Before I take anything, I'd like to understand it. What does the '30C' on the label mean, exactly?",
+    "difficulty": 4,
+    "tags": [
+      "homeopathy",
+      "patient-education",
+      "plain-language"
+    ],
+    "notes": "Practises explaining your own practice in plain English to a sceptical listener, and answering hard questions without jargon."
+  },
+  {
+    "id": "work-homeo-followup-01",
+    "source": "builtin",
+    "title": "Follow-up: Assessing the Response",
+    "domain": "work",
+    "persona": "A returning patient named George, 61, four weeks into a remedy. His report is mixed and muddled — some things better, one thing worse, and he's changed two other habits in the same period without mentioning it unless asked. Cheerful and talkative, prone to going off on tangents about his garden.",
+    "openingLine": "Well, I'd say I'm better. Mostly. Though the sleep is odd now — is that supposed to happen?",
+    "difficulty": 4,
+    "tags": [
+      "homeopathy",
+      "follow-up",
+      "clarifying-questions"
+    ],
+    "notes": "Practises separating signal from noise: clarifying questions, keeping a rambling account on track, and summarising back."
+  },
+  {
+    "id": "work-homeo-medication-01",
+    "source": "builtin",
+    "title": "Patient Who Wants to Stop Their Prescription",
+    "domain": "work",
+    "persona": "A patient named Priya, 47, who has decided she wants to come off the medication her GP prescribed and rely on your treatment instead. Determined and a little defensive — she expects you to agree, and pushes back if you don't. She'll listen if you take her seriously rather than lecture her. She has not spoken to her GP about this.",
+    "openingLine": "Honestly, I'd rather just stop the tablets my doctor gave me and do this instead. That's fine, isn't it?",
+    "difficulty": 5,
+    "tags": [
+      "homeopathy",
+      "difficult-conversation",
+      "boundaries"
+    ],
+    "notes": "Practises holding a professional boundary in English: declining to advise stopping a prescription, directing her back to her GP, and keeping the relationship intact while saying no."
+  },
+  {
+    "id": "work-homeo-colleague-01",
+    "source": "builtin",
+    "title": "Explaining Your Approach to a GP",
+    "domain": "work",
+    "persona": "A general practitioner named Dr. Lowe, contacted about a shared patient. Professional and courteous but frankly unconvinced, and short on time. Asks what you're treating, what you've advised, and whether anything conflicts with the patient's existing care. Expects precise, unemotional answers and notices evasion.",
+    "openingLine": "Thanks for taking my call. We share a patient, and I'd like to understand what she's receiving from you and what you've told her.",
+    "difficulty": 5,
+    "tags": [
+      "homeopathy",
+      "colleague",
+      "professional-register"
+    ],
+    "notes": "Practises formal professional register, being concise under scrutiny, and staying collaborative with a sceptical colleague."
+  },
+  {
     "id": "networking-conf-01",
     "source": "builtin",
     "title": "Conference Coffee Break",

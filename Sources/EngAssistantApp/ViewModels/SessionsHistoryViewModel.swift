@@ -8,11 +8,18 @@ public final class SessionsHistoryViewModel: ObservableObject {
     @Published public private(set) var lastError: String? = nil
 
     private let persister: SessionPersisting
+    private let audioPersister: AudioFilePersisting?
     private let catalog: ScenarioCatalog?
     private let limit: Int
 
-    public init(persister: SessionPersisting, catalog: ScenarioCatalog? = nil, limit: Int = 50) {
+    public init(
+        persister: SessionPersisting,
+        audioPersister: AudioFilePersisting? = nil,
+        catalog: ScenarioCatalog? = nil,
+        limit: Int = 50
+    ) {
         self.persister = persister
+        self.audioPersister = audioPersister
         self.catalog = catalog
         self.limit = limit
     }
@@ -29,6 +36,24 @@ public final class SessionsHistoryViewModel: ObservableObject {
     public func canContinue(_ session: Session) -> Bool {
         guard let catalog else { return true }
         return catalog.scenario(id: session.scenarioId) != nil
+    }
+
+    /// Removes a session, its turns, and its recordings. The row disappears
+    /// immediately rather than after a reload, so the list doesn't sit there
+    /// showing something that's already gone.
+    ///
+    /// Audio is deleted first: if that fails the database row survives, so the
+    /// clips are still reachable to try again. The other order would orphan
+    /// files with nothing pointing at them.
+    public func delete(_ session: Session) async {
+        do {
+            try audioPersister?.deleteAll(forSession: session.id)
+            try persister.delete(id: session.id)
+            sessions.removeAll { $0.id == session.id }
+            lastError = nil
+        } catch {
+            lastError = "Could not delete that session: \(FriendlyError.message(for: error))"
+        }
     }
 
     public func load() async throws {
