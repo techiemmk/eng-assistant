@@ -29,7 +29,7 @@ public struct OnboardingView: View {
             .background(Theme.brandGradient)
 
             // Checks
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Quick setup")
                     .font(Theme.sectionTitle)
                     .padding(.bottom, 4)
@@ -41,10 +41,22 @@ public struct OnboardingView: View {
                     status: viewModel.ollamaStatus
                 )
                 checkRow(
+                    icon: "brain.head.profile",
+                    label: "Language model installed",
+                    detail: "A local model Ollama can actually run",
+                    status: viewModel.modelStatus
+                )
+                checkRow(
                     icon: "mic.circle.fill",
                     label: "Microphone permission",
                     detail: "Used only for in-session capture; audio stays local",
                     status: viewModel.micStatus
+                )
+                checkRow(
+                    icon: "waveform.badge.mic",
+                    label: "Speech-to-text (optional)",
+                    detail: "whisper.cpp + a ggml model, so the AI hears your words",
+                    status: viewModel.sttStatus
                 )
 
                 Spacer(minLength: 4)
@@ -71,7 +83,7 @@ public struct OnboardingView: View {
             }
             .padding(28)
         }
-        .frame(width: 560, height: 460)
+        .frame(width: 580, height: 620)
         .task { await viewModel.runChecks() }
     }
 

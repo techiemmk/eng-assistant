@@ -27,7 +27,15 @@ public actor SessionEngine {
     }
     private var state: ActiveState?
 
+    /// True between `beginUserSpeech()` and `finishUserSpeech()`.
+    private var isCapturing: Bool = false
+
     public static let defaultHistoryBudget = 12_000  // characters; ~3000 tokens at ~4 chars/token
+
+    /// A 16-bit mono WAV with no samples is exactly 44 bytes of header. Anything
+    /// at or below this is silence-only, so there is nothing to transcribe and we
+    /// fail fast rather than sending an empty clip to the STT provider.
+    public static let minimumAudioBytes = 64
 
     public init(
         scenario: Scenario,
@@ -88,18 +96,73 @@ public actor SessionEngine {
         try await speakAndPersistOpeningLine(text: scenario.openingLine)
     }
 
-    /// Runs one full turn. Atomicity contract: if the LLM (or any step after the
-    /// user turn is persisted) throws, the user turn is marked incomplete and
-    /// the in-memory `ChatHistory` is NOT updated, so the next turn doesn't
-    /// resend a half-broken history to the model.
+    /// Opens the microphone and returns immediately. The caller decides when the
+    /// turn is over — either by polling `captureHasEndpointed()` (VAD auto-stop)
+    /// or on user action — and then calls `finishUserSpeech()`.
+    public func beginUserSpeech() async throws {
+        guard state != nil else { throw SessionEngineError.notStarted }
+        guard !isCapturing else { throw SessionEngineError.alreadyCapturing }
+        try await audioCapture.startRecording()
+        isCapturing = true
+    }
+
+    /// True once the capture device's VAD has seen speech followed by sustained
+    /// silence. Returns false when not capturing.
+    public func captureHasEndpointed() async -> Bool {
+        guard isCapturing else { return false }
+        return await audioCapture.hasEndpointed()
+    }
+
+    public func isCapturingSpeech() -> Bool {
+        isCapturing
+    }
+
+    /// Stops recording and discards the clip without running a turn. Used when a
+    /// session ends while the mic is still open.
+    public func cancelUserSpeech() async {
+        guard isCapturing else { return }
+        isCapturing = false
+        _ = try? await audioCapture.stopRecording()
+    }
+
+    /// Runs one full turn from start to finish, opening and closing the mic
+    /// itself. Convenience for non-interactive callers (tests, the smoke CLI);
+    /// the GUI uses `beginUserSpeech()` / `finishUserSpeech()` so the user
+    /// controls how long the mic stays open.
     @discardableResult
     public func runUserTurn() async throws -> [Correction] {
-        guard var current = state else { throw SessionEngineError.notStarted }
+        try await beginUserSpeech()
+        return try await finishUserSpeech()
+    }
 
-        try await audioCapture.startRecording()
-        let audio = try await audioCapture.stopRecording()
+    /// Closes the mic and runs the rest of the turn: transcribe, prompt the LLM,
+    /// speak and persist the reply. Atomicity contract: if the LLM (or any step
+    /// after the user turn is persisted) throws, the user turn is marked
+    /// incomplete and the in-memory `ChatHistory` is NOT updated, so the next
+    /// turn doesn't resend a half-broken history to the model.
+    @discardableResult
+    public func finishUserSpeech() async throws -> [Correction] {
+        guard var current = state else { throw SessionEngineError.notStarted }
+        guard isCapturing else { throw SessionEngineError.notCapturing }
+
+        let audio: Data
+        do {
+            audio = try await audioCapture.stopRecording()
+            isCapturing = false
+        } catch {
+            isCapturing = false
+            throw error
+        }
+        guard audio.count > Self.minimumAudioBytes else {
+            throw SessionEngineError.noSpeechCaptured
+        }
         let userStart = Date()
         let transcript = try await stt.transcribe(audio: audio)
+        guard !transcript.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            // Mic was open but the transcriber found no words. Nothing is
+            // persisted, so the user can simply talk again.
+            throw SessionEngineError.noSpeechCaptured
+        }
 
         let userAudioPath: String?
         do {
@@ -173,6 +236,7 @@ public actor SessionEngine {
 
     public func end(summary: String?) async throws {
         guard let current = state else { throw SessionEngineError.notStarted }
+        await cancelUserSpeech()
         try sessionPersister.finalize(id: current.sessionId, endedAt: Date(), summary: summary)
     }
 
@@ -267,4 +331,10 @@ public actor SessionEngine {
 
 public enum SessionEngineError: Error, Equatable {
     case notStarted
+    /// `beginUserSpeech()` called while the mic was already open.
+    case alreadyCapturing
+    /// `finishUserSpeech()` called without a matching `beginUserSpeech()`.
+    case notCapturing
+    /// The clip held no audio, or the transcriber found no words in it.
+    case noSpeechCaptured
 }

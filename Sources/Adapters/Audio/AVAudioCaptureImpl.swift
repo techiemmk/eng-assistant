@@ -98,4 +98,9 @@ public final class AVAudioCaptureImpl: AudioCapture, @unchecked Sendable {
         defer { lock.unlock() }
         return endpointed
     }
+
+    /// `AudioCapture` conformance — the async face of `isEndpointed()`.
+    public func hasEndpointed() async -> Bool {
+        isEndpointed()
+    }
 }

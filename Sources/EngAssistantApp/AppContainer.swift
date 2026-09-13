@@ -41,10 +41,22 @@ public final class AppContainer: @unchecked Sendable {
         return try AppContainer(storageLayout: StorageLayout(appName: unique))
     }
 
-    /// Builds an OllamaLLM using URLSession, with the model name from settings
-    /// (or a default).
+    /// Builds an OllamaLLM using URLSession. The model name travels separately,
+    /// in `LLMOptions` — see `AppSettingsStore.modelName`.
     public func makeLLMProvider() -> LLMProvider {
         OllamaLLM(httpClient: URLSessionHTTPClient())
+    }
+
+    /// Builds the real Whisper adapter when both paths are configured (or were
+    /// auto-detected); otherwise a provider that explains what's missing.
+    @MainActor
+    public func makeSTTProvider(settings: AppSettingsStore) -> STTProvider {
+        guard settings.isSTTConfigured else { return UnconfiguredSTTProvider() }
+        return WhisperLocalSTT(
+            runner: ForegroundProcessRunner(),
+            executablePath: settings.sttExecutablePath,
+            modelPath: settings.sttModelPath
+        )
     }
 
     /// Builds an AVSpeechTTS fallback. Once Piper is configured, this can route
@@ -61,5 +73,11 @@ public final class AppContainer: @unchecked Sendable {
 
     public func makeAudioPlayback() -> AudioPlayback {
         AVAudioPlaybackImpl()
+    }
+
+    /// The app's saved settings, hydrated by `AppState.bootstrap()`.
+    @MainActor
+    public func makeSettingsStore() -> AppSettingsStore {
+        AppSettingsStore(persister: settingsRepository)
     }
 }

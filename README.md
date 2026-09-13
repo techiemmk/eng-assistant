@@ -2,13 +2,13 @@
 
 A native macOS app for practicing **advanced English conversation** with a local AI roleplay partner. Built for the author's personal use; ships fully local — your audio and conversation history never leave your Mac.
 
-**Status:** v1 shipped. SwiftUI app with seven screens, real Ollama-backed conversations, post-session debrief with metrics + weak-spot extraction, on-disk audio persistence.
+**Status:** v1 shipped. SwiftUI app with seven screens, real Ollama-backed conversations, whisper.cpp speech-to-text, post-session debrief with metrics + weak-spot extraction, on-disk audio persistence.
 
 ---
 
 ## What it does
 
-You pick a scenario (work standup, conference small talk, dinner with friends, etc.) or describe one yourself. The app plays the AI persona's opening line, you push to talk, the AI responds in character. After you end the session, it analyzes the transcript and gives you a debrief: per-turn metrics, recurring weak spots it noticed across sessions, and suggested drills for next time.
+You pick a scenario (work standup, conference small talk, dinner with friends, etc.) or describe one yourself. The app plays the AI persona's opening line, you push to talk (the mic stays open until you tap again or pause for ~1.5s), the AI responds in character. After you end the session, it analyzes the transcript and gives you a debrief: per-turn metrics, recurring weak spots it noticed across sessions, and suggested drills for next time.
 
 Two modes:
 - **Flow** — AI stays in character, never breaks; feedback comes only at the debrief.
@@ -21,14 +21,19 @@ See **[INSTALLATION.md](INSTALLATION.md)** for full setup. Short version:
 ```bash
 brew install ollama
 ollama serve &
-ollama pull qwen2.5:7b-instruct
+ollama pull qwen2.5:7b-instruct        # a LOCAL model; ":cloud" entries won't work
+
+brew install whisper-cpp               # optional, but needed for the app to hear you
+mkdir -p ~/Library/Application\ Support/EngAssistant/models
+curl -L -o ~/Library/Application\ Support/EngAssistant/models/ggml-base.en.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
 
 # In a new terminal, in the repo root:
 scripts/build-app.sh
 open EngAssistant.app
 ```
 
-First launch: right-click the app in Finder → Open (Gatekeeper bypass for unsigned apps). Grant microphone permission when prompted.
+First launch: right-click the app in Finder → Open (Gatekeeper bypass for unsigned apps). Grant microphone permission when prompted. The setup wizard verifies that Ollama has a usable local model — a running server with nothing pulled is the most common cause of a failed first turn.
 
 ## Project structure
 
@@ -79,6 +84,7 @@ The project was built in 6 milestone plans, each with detailed TDD task breakdow
 4. **Local Providers** — real Ollama / Whisper / Piper / AVSpeech adapters
 5. **Audio I/O** — `AVAudioCaptureImpl`, `AVAudioPlaybackImpl`, WAV codec, VAD
 6. **UI v1** — SwiftUI app, all screens, onboarding, retention sweeper
+7. **Wiring & diagnostics** — settings-driven model selection, VAD-backed push-to-talk, Whisper wired into the GUI, actionable setup errors
 
 Each plan lives in [`docs/superpowers/plans/`](docs/superpowers/plans/).
 

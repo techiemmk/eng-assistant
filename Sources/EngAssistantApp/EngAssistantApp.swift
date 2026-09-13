@@ -16,8 +16,8 @@ struct EngAssistantApp: App {
                     OnboardingView(viewModel: appState.onboardingVM) {
                         appState.markOnboardingComplete()
                     }
-                } else if let container = appState.container {
-                    ContentView(container: container)
+                } else if let container = appState.container, let settings = appState.settings {
+                    ContentView(container: container, settings: settings)
                 } else {
                     ProgressView("Initializing...")
                         .controlSize(.large)
@@ -38,6 +38,7 @@ struct EngAssistantApp: App {
 final class AppState: ObservableObject {
     @Published var didCompleteOnboarding: Bool = false
     @Published var container: AppContainer?
+    @Published var settings: AppSettingsStore?
     @Published var bootstrapError: String?
     let onboardingVM = OnboardingViewModel()
 
@@ -46,17 +47,22 @@ final class AppState: ObservableObject {
         do {
             let c = try AppContainer()
             container = c
+
+            // Hydrate saved settings before anything reads them, so the session
+            // and debrief screens use the configured model, not a default.
+            let store = c.makeSettingsStore()
+            store.reload()
+            settings = store
+            onboardingVM.setModelName(store.modelName)
+
             // Hydrate onboarding-completion flag from persisted settings.
             if let v = try c.settingsRepository.get(.didCompleteOnboarding), v == "true" {
                 didCompleteOnboarding = true
             }
-            // Read retention setting and run sweeper in the background.
-            let days: Int
-            if let s = try c.settingsRepository.get(.audioRetentionDays), let d = Int(s) {
-                days = d
-            } else {
-                days = 30
-            }
+            // Re-run setup checks now that the real model name is known.
+            Task { await self.onboardingVM.runChecks() }
+
+            let days = store.audioRetentionDays
             Task.detached {
                 let sweeper = AudioRetentionSweeper(layout: c.storageLayout, retentionDays: days)
                 _ = try? sweeper.sweep()

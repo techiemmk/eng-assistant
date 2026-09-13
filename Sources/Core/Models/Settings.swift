@@ -7,5 +7,16 @@ public enum AppSettingKey: String, CaseIterable, Sendable {
     case llmModelName = "llm_model_name"
     case ttsVoiceName = "tts_voice_name"
     case sttModelName = "stt_model_name"
+    case sttExecutablePath = "stt_executable_path"
+    case sttModelPath = "stt_model_path"
     case didCompleteOnboarding = "did_complete_onboarding"
+}
+
+/// Fallback values used when a setting has never been written. Kept in one
+/// place so the LLM model name isn't duplicated across the composition root,
+/// the view models, and the smoke CLI.
+public enum AppDefaults {
+    public static let llmModelName = "qwen2.5:7b-instruct"
+    public static let audioRetentionDays = 30
+    public static let defaultMode: SessionMode = .flow
 }

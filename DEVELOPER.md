@@ -13,10 +13,14 @@ Hands-on reference for building, testing, and extending EngAssistant.
 | Apple CLT or Xcode | Either works | Xcode lets you run `swift test` directly; CLT-only requires `bin/test.sh` (see below) |
 | Ollama | Latest | Required at runtime for the real LLM. Install: `brew install ollama` |
 
-Optional, deferred to Plan 7:
+Optional:
 
-- `whisper-cli` (for real STT) — `brew install whisper-cpp`
-- `piper` (for real TTS) — see [piper docs](https://github.com/rhasspy/piper)
+- `whisper-cli` (speech-to-text) — `brew install whisper-cpp`, plus a ggml model in
+  `~/Library/Application Support/EngAssistant/models/`. Both are auto-detected at
+  launch (`STTLocator`); without them the Live Session screen reports that STT is
+  unconfigured rather than fabricating a transcript.
+- `piper` (alternative TTS) — see [piper docs](https://github.com/rhasspy/piper).
+  `AVSpeechTTS` is the default and needs nothing installed.
 
 ---
 
@@ -158,14 +162,46 @@ The smoke writes to `/tmp/eng-assistant-engine-smoke.sqlite` and audio under `~/
 
 ---
 
-## Known limitations (Plan 7 polish backlog)
+## Runtime wiring worth knowing
 
-- **Live Session uses a placeholder STT** (`ConsoleSTTProvider` in `ContentView.swift`). Real Whisper integration needs the user to install whisper-cli and configure model paths in Settings.
+**Settings are read through one store.** `AppSettingsStore` holds the *saved*
+settings; `AppState.bootstrap()` hydrates it, `ContentView` reads `modelName`
+from it for both the session and the debrief analyzers, and `SettingsViewModel`
+calls `store.apply(...)` after a successful save so a changed model takes effect
+without a relaunch. Nothing outside `AppDefaults` should hardcode a model name.
+
+**A user turn is two calls, not one.** `SessionEngine.beginUserSpeech()` opens
+the mic and returns; `finishUserSpeech()` closes it and runs transcribe → LLM →
+speak. `runUserTurn()` still exists and does both back-to-back, which is right
+for the smoke CLI and tests but would record nothing in a GUI. The live screen
+polls `captureHasEndpointed()` every 200 ms so a pause ends the turn on its own
+(`AVAudioCaptureImpl` reports its `VADEndpointer` state through
+`AudioCapture.hasEndpointed()`; capture devices without VAD keep the protocol
+extension's `false` and wait for the second tap).
+
+**Setup failures are typed, not HTTP.** `OllamaLLM` maps 404 to
+`OllamaLLMError.modelNotInstalled` and 402 to `.modelRequiresSubscription`;
+`WhisperLocalSTT` preflights both its paths. `FriendlyError.message(for:)` is
+what the UI renders — add new adapter errors as `LocalizedError` and it picks up
+`errorDescription` for free.
+
+**`HealthCheck.localModels` filters cloud entries.** A `:cloud` model (or one
+with a `remote_host`) appears in `/api/tags` but needs an Ollama subscription to
+answer, so counting it as installed is how a green setup check becomes a 402 on
+the first turn.
+
+---
+
+## Known limitations (polish backlog)
+
+- **whisper.cpp isn't bundled** — the user installs it themselves; `STTLocator`
+  finds it, and `AppContainer.makeSTTProvider(settings:)` falls back to
+  `UnconfiguredSTTProvider` when it's absent.
 - **Progress Dashboard** screen — deferred.
 - **Weak Spots Notebook** with mark-as-resolved UI — deferred.
 - **Audio replay buttons** in Debrief — deferred.
 - **Custom Scenario authoring UI** — deferred.
 - **Session resume** after a crash — the data layer supports it (`SessionPersisting.listActive`), but the UI doesn't expose it yet.
-- **`LiveSessionViewModel.runUserTurn`** uses `engine.sessionForTesting()` from production code — label smell, harmless today, plan to clean up.
+- **`LiveSessionViewModel`** uses `engine.sessionForTesting()` from production code — label smell, harmless today, plan to clean up.
 - **View models rebuild on every navigation switch** in `ContentView` — a Settings page with unsaved edits will lose them on tab change.
 - **Pre-existing Sendable warnings** on `Database` and `WeakSpotRepository` — known, deferred.

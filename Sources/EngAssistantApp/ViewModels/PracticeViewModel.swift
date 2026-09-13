@@ -5,12 +5,13 @@ import Core
 public final class PracticeViewModel: ObservableObject {
     public let scenarios: [Scenario]
 
-    @Published public var mode: SessionMode = .flow
+    @Published public var mode: SessionMode
     @Published public var domainFilter: ScenarioDomain? = nil
     @Published public var selectedScenarioId: String? = nil
 
-    public init(catalog: ScenarioCatalog) {
+    public init(catalog: ScenarioCatalog, mode: SessionMode = AppDefaults.defaultMode) {
         self.scenarios = catalog.allScenarios
+        self.mode = mode
     }
 
     public var filteredScenarios: [Scenario] {

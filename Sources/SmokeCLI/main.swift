@@ -6,7 +6,7 @@ import Adapters
 
 func main() async throws {
     let live = CommandLine.arguments.contains("--live")
-    let modelName = ProcessInfo.processInfo.environment["OLLAMA_MODEL"] ?? "qwen2.5:7b-instruct"
+    let modelName = ProcessInfo.processInfo.environment["OLLAMA_MODEL"] ?? AppDefaults.llmModelName
 
     let dbPath = URL(fileURLWithPath: "/tmp/eng-assistant-engine-smoke.sqlite")
     if FileManager.default.fileExists(atPath: dbPath.path) {

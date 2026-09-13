@@ -45,14 +45,19 @@ public struct LiveSessionView: View {
                     .lineLimit(2)
                 HStack(spacing: 6) {
                     modeBadge
-                    if viewModel.isProcessing {
+                    if viewModel.isListening {
+                        Label("Listening — speak now", systemImage: "waveform")
+                            .font(Theme.chip)
+                            .foregroundStyle(.green)
+                            .symbolEffect(.variableColor.iterative, isActive: true)
+                    } else if viewModel.isProcessing {
                         Label("Working...", systemImage: "ellipsis")
                             .font(Theme.chip)
                             .foregroundStyle(Theme.brand)
                     } else if viewModel.isActive {
-                        Label("Listening", systemImage: "circle.fill")
+                        Label("Your turn", systemImage: "circle.fill")
                             .font(Theme.chip)
-                            .foregroundStyle(.green)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -98,14 +103,25 @@ public struct LiveSessionView: View {
     private var controlBar: some View {
         HStack(spacing: 12) {
             Button {
-                Task { try? await viewModel.runUserTurn() }
+                Task { await viewModel.toggleListening() }
             } label: {
-                Label("Push to talk", systemImage: "mic.fill")
-                    .frame(minWidth: 180)
+                Label(
+                    viewModel.isListening ? "Stop & send" : "Push to talk",
+                    systemImage: viewModel.isListening ? "stop.fill" : "mic.fill"
+                )
+                .frame(minWidth: 180)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            .tint(viewModel.isListening ? .red : Theme.brand)
+            .keyboardShortcut(.space, modifiers: [])
             .disabled(!viewModel.isActive || viewModel.isProcessing)
+
+            Text(viewModel.isListening
+                 ? "Tap again when you're done — or just pause and it sends itself."
+                 : "Tap to record your reply. Space works too.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             Spacer()
 

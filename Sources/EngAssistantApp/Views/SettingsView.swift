@@ -33,6 +33,43 @@ public struct SettingsView: View {
 
                 Section {
                     HStack {
+                        Image(systemName: "terminal.fill").foregroundStyle(Theme.brand).frame(width: 20)
+                        TextField("Path to whisper-cli", text: $viewModel.sttExecutablePath)
+                    }
+                    HStack {
+                        Image(systemName: "doc.fill").foregroundStyle(Theme.brand).frame(width: 20)
+                        TextField("Path to ggml model (.bin)", text: $viewModel.sttModelPath)
+                    }
+                    HStack {
+                        Button {
+                            viewModel.autodetectSTT()
+                        } label: {
+                            Label("Auto-detect", systemImage: "sparkle.magnifyingglass")
+                        }
+                        .buttonStyle(.bordered)
+                        Spacer()
+                        if viewModel.isSTTConfigured {
+                            Label("Configured", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .font(.caption)
+                        } else {
+                            Label("Not configured — the app can't hear you yet", systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                                .font(.caption)
+                        }
+                    }
+                } header: {
+                    Label("Speech-to-text", systemImage: "waveform.badge.mic")
+                        .font(Theme.cardTitle)
+                } footer: {
+                    Text("Install with `brew install whisper-cpp`, then drop a ggml model into "
+                         + "~/Library/Application Support/EngAssistant/models/ and hit Auto-detect.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section {
+                    HStack {
                         Image(systemName: "wind").foregroundStyle(Theme.brand).frame(width: 20)
                         Picker("Default mode", selection: $viewModel.defaultMode) {
                             Label("Flow", systemImage: "wind").tag(SessionMode.flow)
