@@ -146,7 +146,7 @@ When the first three are green, click **Get started**. The wizard will not run a
 You're at the Practice screen.
 
 1. Click a scenario card (e.g. "Daily Engineering Standup")
-2. Pick **Flow** (no corrections during conversation) or **Coach** (gentle inline corrections)
+2. Pick **Flow** (no corrections during conversation) or **Coach** (inline corrections, labelled by category, with the wording you got wrong underlined in your transcript — and your recurring weak spots from past sessions targeted specifically)
 3. Click **Start Session**
 4. The AI plays its opening line through your speakers. Click **Push to talk** (or press Space) and speak. The mic stays open — click **Stop & send** when you're done, or just pause for about a second and a half and the app sends the turn itself.
 5. Click **End Session** when you're done

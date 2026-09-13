@@ -127,7 +127,12 @@ final class InMemoryAudioFilePersister: AudioFilePersisting, @unchecked Sendable
         )
         try await engine.start()
         let corrections = try await engine.runUserTurn()
-        #expect(corrections == [Correction(message: "try 'I think' instead of 'I am thinking'")])
+        // The parser now also mines the marker for the phrase to highlight.
+        #expect(corrections == [Correction(
+            message: "try 'I think' instead of 'I am thinking'",
+            category: nil,
+            offendingText: "I am thinking"
+        )])
         let synthed = await tts.synthesizedTexts
         #expect(synthed.count == 2)
         #expect(synthed[1] == "I see! ")

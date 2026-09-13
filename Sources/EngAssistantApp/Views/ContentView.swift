@@ -65,7 +65,10 @@ public struct ContentView: View {
                         sessionPersister: container.sessionRepository,
                         turnPersister: container.turnRepository,
                         audioFilePersister: container.audioFileStore,
-                        modelName: settings.modelName
+                        modelName: settings.modelName,
+                        // Only coach mode acts on these; flow mode never
+                        // mentions them, so don't pay for the read.
+                        activeWeakSpots: mode == .coach ? container.activeWeakSpots() : []
                     )
                     LiveSessionView(viewModel: vm) { sessionId in
                         selection = .debrief(sessionId: sessionId)

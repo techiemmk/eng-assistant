@@ -37,6 +37,40 @@ public enum Theme {
     public static let metricNumber = Font.system(.title2, design: .rounded, weight: .bold).monospacedDigit()
     public static let chip = Font.system(.caption, design: .rounded, weight: .medium)
 
+    // MARK: - Correction categories
+
+    /// Grammar gets the loudest treatment — it's the category the user most
+    /// wants pointed at, and the only one the persona prompt always requires.
+    public static func correctionColor(_ category: WeakSpotCategory?) -> Color {
+        switch category {
+        case .grammar: return Color(red: 0.90, green: 0.26, blue: 0.35)
+        case .vocab: return Color(red: 0.20, green: 0.55, blue: 0.85)
+        case .filler: return Color(red: 0.55, green: 0.55, blue: 0.60)
+        case .fluency: return Color(red: 0.15, green: 0.65, blue: 0.45)
+        case nil: return highlight
+        }
+    }
+
+    public static func correctionIcon(_ category: WeakSpotCategory?) -> String {
+        switch category {
+        case .grammar: return "text.badge.xmark"
+        case .vocab: return "character.book.closed.fill"
+        case .filler: return "wind"
+        case .fluency: return "waveform.path"
+        case nil: return "lightbulb.fill"
+        }
+    }
+
+    public static func correctionLabel(_ category: WeakSpotCategory?) -> String {
+        switch category {
+        case .grammar: return "Grammar"
+        case .vocab: return "Word choice"
+        case .filler: return "Filler"
+        case .fluency: return "Fluency"
+        case nil: return "Tip"
+        }
+    }
+
     // MARK: - Domain icons
     public static func domainIcon(_ domain: ScenarioDomain) -> String {
         switch domain {

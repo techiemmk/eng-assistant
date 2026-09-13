@@ -13,6 +13,7 @@ public struct LiveSessionView: View {
     public var body: some View {
         VStack(spacing: 0) {
             header
+            weakSpotTargets
             Divider()
             transcriptScroll
             if let err = viewModel.lastError {
@@ -64,6 +65,22 @@ public struct LiveSessionView: View {
             Spacer()
         }
         .padding(18)
+    }
+
+    /// Coach mode is told to watch for the user's recurring mistakes; showing
+    /// them makes that visible instead of implicit.
+    @ViewBuilder
+    private var weakSpotTargets: some View {
+        if viewModel.mode == .coach, !viewModel.activeWeakSpots.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Watching for your recurring mistakes", systemImage: "scope")
+                    .font(Theme.chip)
+                    .foregroundStyle(.secondary)
+                FlowingChips(weakSpots: viewModel.activeWeakSpots)
+            }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 12)
+        }
     }
 
     private var modeBadge: some View {
@@ -144,6 +161,56 @@ public struct LiveSessionView: View {
     }
 }
 
+/// Wraps the weak-spot chips onto as many rows as they need — with five of
+/// them, a single HStack would push the header wider than the window.
+private struct FlowingChips: View {
+    let weakSpots: [WeakSpot]
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            row(weakSpots)
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(chunks.enumerated()), id: \.offset) { _, chunk in
+                    row(chunk)
+                }
+            }
+        }
+    }
+
+    private var chunks: [[WeakSpot]] {
+        stride(from: 0, to: weakSpots.count, by: 2).map {
+            Array(weakSpots[$0..<min($0 + 2, weakSpots.count)])
+        }
+    }
+
+    private func row(_ items: [WeakSpot]) -> some View {
+        HStack(spacing: 6) {
+            ForEach(items) { chip($0) }
+        }
+    }
+
+    private func chip(_ weakSpot: WeakSpot) -> some View {
+        let color = Theme.correctionColor(weakSpot.category)
+        return HStack(spacing: 4) {
+            Image(systemName: Theme.correctionIcon(weakSpot.category))
+                .font(.system(size: 9))
+            Text(weakSpot.pattern)
+                .lineLimit(1)
+            if weakSpot.occurrenceCount > 1 {
+                Text("\(weakSpot.occurrenceCount)x")
+                    .font(.system(size: 9, design: .rounded).weight(.bold))
+                    .opacity(0.75)
+            }
+        }
+        .font(Theme.chip)
+        .foregroundStyle(color)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(color.opacity(0.12))
+        .clipShape(Capsule())
+    }
+}
+
 private struct TurnBubbleView: View {
     let turn: LiveSessionViewModel.DisplayTurn
 
@@ -154,20 +221,13 @@ private struct TurnBubbleView: View {
             VStack(alignment: turn.speaker == .user ? .trailing : .leading, spacing: 6) {
                 Text(turn.speaker == .user ? "You" : "AI")
                     .font(.caption).foregroundStyle(.secondary)
-                Text(turn.text)
+                Text(highlightedText)
                     .padding(.horizontal, 12).padding(.vertical, 9)
                     .background(turn.speaker == .user ? Theme.brand.opacity(0.18) : Theme.cardSurface)
                     .foregroundStyle(.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 ForEach(turn.corrections.indices, id: \.self) { i in
-                    HStack(alignment: .top, spacing: 6) {
-                        Image(systemName: "lightbulb.fill")
-                            .foregroundStyle(Theme.highlight)
-                            .font(.caption)
-                        Text(turn.corrections[i].message)
-                            .font(.caption)
-                            .foregroundStyle(Theme.highlight)
-                    }
+                    correctionRow(turn.corrections[i])
                 }
             }
             .frame(maxWidth: 480, alignment: turn.speaker == .user ? .trailing : .leading)
@@ -185,5 +245,43 @@ private struct TurnBubbleView: View {
                 .font(.caption)
                 .foregroundStyle(turn.speaker == .user ? Theme.brand : .secondary)
         }
+    }
+
+    private func correctionRow(_ correction: Correction) -> some View {
+        let color = Theme.correctionColor(correction.category)
+        return HStack(alignment: .top, spacing: 6) {
+            Image(systemName: Theme.correctionIcon(correction.category))
+                .foregroundStyle(color)
+                .font(.caption)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(Theme.correctionLabel(correction.category).uppercased())
+                    .font(.system(size: 9, design: .rounded).weight(.bold))
+                    .foregroundStyle(color)
+                Text(correction.message)
+                    .font(.caption)
+                    .foregroundStyle(color)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(color.opacity(0.10))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    /// Marks the wording a correction called out, so the mistake is visible in
+    /// the sentence the user actually said rather than only described below it.
+    /// Falls back to plain text when nothing matched.
+    private var highlightedText: AttributedString {
+        var attributed = AttributedString(turn.text)
+        for correction in turn.corrections {
+            guard let phrase = correction.offendingText, !phrase.isEmpty,
+                  let range = attributed.range(of: phrase, options: .caseInsensitive)
+            else { continue }
+            let color = Theme.correctionColor(correction.category)
+            attributed[range].foregroundColor = color
+            attributed[range].underlineStyle = .single
+            attributed[range].backgroundColor = color.opacity(0.18)
+        }
+        return attributed
     }
 }

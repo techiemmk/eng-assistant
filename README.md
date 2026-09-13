@@ -12,7 +12,7 @@ You pick a scenario (work standup, conference small talk, dinner with friends, e
 
 Two modes:
 - **Flow** — AI stays in character, never breaks; feedback comes only at the debrief.
-- **Coach** — AI subtly inserts inline corrections (`[[coach: try 'I'd rather' instead]]`) that the UI surfaces but the audio strips.
+- **Coach** — AI inserts inline corrections (`[[coach:grammar: try 'I finished' instead of 'I have finish']]`) that the UI surfaces but the audio strips. Corrections are labelled by category, grammar mistakes are always flagged, and the wording you got wrong is underlined in your own transcript bubble. Coach mode is also told your recurring weak spots from past sessions, so it watches for those specifically — the session header shows which ones it's targeting.
 
 ## Quick start
 

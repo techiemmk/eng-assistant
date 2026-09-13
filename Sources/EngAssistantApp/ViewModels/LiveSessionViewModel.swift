@@ -19,6 +19,9 @@ public final class LiveSessionViewModel: ObservableObject {
 
     public let scenario: Scenario
     public let mode: SessionMode
+    /// Recurring mistakes coach mode is told to watch for. Surfaced in the
+    /// header so the user can see what's being targeted this session.
+    public let activeWeakSpots: [WeakSpot]
 
     private let engine: SessionEngine
     private let sessionPersister: SessionPersisting
@@ -42,17 +45,19 @@ public final class LiveSessionViewModel: ObservableObject {
         turnPersister: TurnPersisting,
         audioFilePersister: AudioFilePersisting?,
         modelName: String = AppDefaults.llmModelName,
+        activeWeakSpots: [WeakSpot] = [],
         endpointPollInterval: Duration = .milliseconds(200)
     ) {
         self.scenario = scenario
         self.mode = mode
+        self.activeWeakSpots = activeWeakSpots
         self.sessionPersister = sessionPersister
         self.turnPersister = turnPersister
         self.endpointPollInterval = endpointPollInterval
         self.engine = SessionEngine(
             scenario: scenario,
             mode: mode,
-            activeWeakSpots: [],
+            activeWeakSpots: activeWeakSpots,
             llm: llm,
             stt: stt,
             tts: tts,
@@ -173,15 +178,16 @@ public final class LiveSessionViewModel: ObservableObject {
     private func refreshTranscript(corrections: [Correction]) async {
         guard let session = try? await engine.sessionForTesting(),
               let allTurns = try? turnPersister.list(forSession: session.id) else { return }
-        let lastIndex = allTurns.indices.last
+
+        // The AI writes the markers, but they describe what the *user* just
+        // said — so they attach to the user turn being corrected (the last one),
+        // which is also the text the grammar highlight has to land in.
+        let latestUserIndex = allTurns.lastIndex { $0.speaker == .user }
         transcript = allTurns.enumerated().map { offset, turn in
-            // Corrections belong to the reply that was just parsed — the final
-            // AI turn — not to every AI turn in the session.
-            let isLatestAITurn = turn.speaker == .ai && offset == lastIndex
-            return DisplayTurn(
+            DisplayTurn(
                 speaker: turn.speaker,
                 text: turn.text,
-                corrections: isLatestAITurn ? corrections : []
+                corrections: offset == latestUserIndex ? corrections : []
             )
         }
     }

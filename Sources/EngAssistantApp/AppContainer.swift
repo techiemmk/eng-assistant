@@ -80,4 +80,20 @@ public final class AppContainer: @unchecked Sendable {
     public func makeSettingsStore() -> AppSettingsStore {
         AppSettingsStore(persister: settingsRepository)
     }
+
+    /// The user's most frequent unresolved weak spots, for coach mode to target.
+    /// A failed read must not block a session, so it degrades to "no targets"
+    /// rather than throwing — coach mode still corrects what it notices.
+    public func activeWeakSpots(limit: Int = AppContainer.coachWeakSpotLimit) -> [WeakSpot] {
+        do {
+            return try weakSpotRepository.listActiveByFrequency(limit: limit)
+        } catch {
+            FileHandle.standardError.write(Data("[AppContainer] weak-spot read failed: \(error)\n".utf8))
+            return []
+        }
+    }
+
+    /// Kept small on purpose: these go into every prompt of the session, and a
+    /// long list dilutes the instruction rather than sharpening it.
+    public static let coachWeakSpotLimit = 5
 }

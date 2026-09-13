@@ -185,6 +185,17 @@ extension's `false` and wait for the second tap).
 what the UI renders — add new adapter errors as `LocalizedError` and it picks up
 `errorDescription` for free.
 
+**Coach mode's feedback path.** `PersonaBuilder` asks for
+`[[coach:<category>: try 'X' instead of 'Y']]` (or `drop 'Y'` for deletions) and
+appends the user's `activeWeakSpots` so the model targets recurring mistakes;
+`ContentView` supplies those from `AppContainer.activeWeakSpots()`, but only in
+coach mode. `CoachMarkerParser` splits each marker into a `Correction` carrying
+the category and the quoted `offendingText`, which `LiveSessionView` underlines
+inside the *user's* bubble — corrections describe what the user said, so
+`refreshTranscript` attaches them to the latest user turn, not the AI reply.
+Adding a `WeakSpotCategory` case automatically extends the prompt's category
+list and needs a matching colour/icon/label in `Theme`.
+
 **`HealthCheck.localModels` filters cloud entries.** A `:cloud` model (or one
 with a `remote_host`) appears in `/api/tags` but needs an Ollama subscription to
 answer, so counting it as installed is how a green setup check becomes a 402 on
@@ -198,7 +209,7 @@ the first turn.
   finds it, and `AppContainer.makeSTTProvider(settings:)` falls back to
   `UnconfiguredSTTProvider` when it's absent.
 - **Progress Dashboard** screen — deferred.
-- **Weak Spots Notebook** with mark-as-resolved UI — deferred.
+- **Weak Spots Notebook** with mark-as-resolved UI — deferred. `WeakSpotRepository.markResolved` exists and is unused by any screen, so a weak spot can only stop being targeted by the merger aging it out.
 - **Audio replay buttons** in Debrief — deferred.
 - **Custom Scenario authoring UI** — deferred.
 - **Session resume** after a crash — the data layer supports it (`SessionPersisting.listActive`), but the UI doesn't expose it yet.
