@@ -38,6 +38,11 @@ public enum FriendlyError {
             return "The microphone wasn't recording."
         case .noSpeechCaptured:
             return "Didn't catch any speech — check your input device and try again."
+        case .sessionNotFound:
+            return "That session couldn't be found — it may have been deleted."
+        case .scenarioMismatch(let expected, let found):
+            return "That session was recorded for a different scenario "
+                + "('\(found)', not '\(expected)'), so it can't be continued here."
         }
     }
 }

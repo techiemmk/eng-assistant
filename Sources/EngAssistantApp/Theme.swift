@@ -1,12 +1,13 @@
 import SwiftUI
+import AppKit
 import Core
 
 /// Visual design tokens — used by every view so the look stays consistent.
 ///
 /// Both the type scale and the palette live here on purpose. Views should never
 /// reach for a raw `.font(.caption)` or `.foregroundStyle(.secondary)`: the
-/// first makes text size untunable, and the second resolves against the system
-/// appearance, which fights a deliberately light palette.
+/// first makes text size untunable, and the second bypasses the light/dark
+/// pairs defined below.
 public enum Theme {
     /// Display name shown in window titles, nav bars, and onboarding.
     public static let appName = "Jul EngAssistant"
@@ -89,17 +90,32 @@ public enum Theme {
 
     // MARK: - Colors
     //
-    // The app is locked to a light appearance (see `preferredColorScheme` in
-    // EngAssistantApp), so these are fixed light values rather than
-    // `nsColor`-backed ones that would flip with the system setting.
+    // Every colour is a dynamic pair. `NSColor(name:dynamicProvider:)` resolves
+    // per appearance at draw time, which keeps Theme's API static while still
+    // following the appearance the user picked — no environment plumbing and no
+    // second set of tokens. The light and dark variants are each held to 4.5:1
+    // against their own card surface by ThemeLightPaletteTests.
 
-    /// Primary brand color — a confident indigo. Darkened slightly from the
-    /// original so it holds contrast as text on white.
-    public static let brand = Color(red: 0.35, green: 0.27, blue: 0.85)
+    private static func dynamic(
+        light: (CGFloat, CGFloat, CGFloat),
+        dark: (CGFloat, CGFloat, CGFloat)
+    ) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+            let (r, g, b) = isDark ? dark : light
+            return NSColor(srgbRed: r, green: g, blue: b, alpha: 1)
+        })
+    }
 
-    /// Subtle gradient for backgrounds & hero sections. The onboarding hero
-    /// puts white text on it, so both stops have to clear 4.5:1 against white
-    /// — the lighter end used to land at 4.2:1.
+    /// Primary brand colour — a confident indigo, lightened in dark mode so it
+    /// stays legible against a dark card.
+    public static let brand = dynamic(
+        light: (0.35, 0.27, 0.85),
+        dark: (0.66, 0.59, 0.99)
+    )
+
+    /// The onboarding hero puts white text on this, so both stops have to clear
+    /// 4.5:1 against white in either appearance — hence fixed, not dynamic.
     public static let gradientStops = [
         Color(red: 0.38, green: 0.30, blue: 0.90),
         Color(red: 0.50, green: 0.30, blue: 0.88),
@@ -112,24 +128,49 @@ public enum Theme {
     )
 
     /// Warm accent for tips / corrections / highlights. A bright orange only
-    /// reaches ~3.7:1 on white, so this is deepened to clear 4.5:1 — see
-    /// ThemeLightPaletteTests.
-    public static let highlight = Color(red: 0.70, green: 0.35, blue: 0.02)
+    /// reaches ~3.7:1 on white, so the light variant is deepened considerably;
+    /// dark mode can afford the brighter tone.
+    public static let highlight = dynamic(
+        light: (0.70, 0.35, 0.02),
+        dark: (0.98, 0.70, 0.32)
+    )
 
-    /// Cards sit on white; the page behind them is a soft off-white so the
-    /// elevation reads without needing heavy shadows.
-    public static let cardSurface = Color.white
-    public static let mutedSurface = Color(red: 0.957, green: 0.957, blue: 0.973)
-    public static let separator = Color(red: 0.85, green: 0.85, blue: 0.87)
+    /// Cards sit above the page: white on off-white in light mode, and one step
+    /// lighter than the page in dark mode.
+    public static let cardSurface = dynamic(
+        light: (1.00, 1.00, 1.00),
+        dark: (0.17, 0.17, 0.18)
+    )
+    public static let mutedSurface = dynamic(
+        light: (0.957, 0.957, 0.973),
+        dark: (0.11, 0.11, 0.12)
+    )
+    public static let separator = dynamic(
+        light: (0.85, 0.85, 0.87),
+        dark: (0.30, 0.30, 0.32)
+    )
 
-    /// Text colors, explicit so they don't invert under system dark mode.
-    public static let textPrimary = Color(red: 0.11, green: 0.11, blue: 0.13)
-    public static let textSecondary = Color(red: 0.38, green: 0.38, blue: 0.42)
+    public static let textPrimary = dynamic(
+        light: (0.11, 0.11, 0.13),
+        dark: (0.95, 0.95, 0.97)
+    )
+    public static let textSecondary = dynamic(
+        light: (0.38, 0.38, 0.42),
+        dark: (0.68, 0.68, 0.71)
+    )
 
-    /// Status colors, tuned for contrast on a light surface.
-    public static let success = Color(red: 0.10, green: 0.48, blue: 0.28)
-    public static let warning = Color(red: 0.62, green: 0.38, blue: 0.02)
-    public static let danger = Color(red: 0.78, green: 0.16, blue: 0.21)
+    public static let success = dynamic(
+        light: (0.10, 0.48, 0.28),
+        dark: (0.38, 0.84, 0.55)
+    )
+    public static let warning = dynamic(
+        light: (0.62, 0.38, 0.02),
+        dark: (0.98, 0.74, 0.28)
+    )
+    public static let danger = dynamic(
+        light: (0.78, 0.16, 0.21),
+        dark: (0.99, 0.50, 0.53)
+    )
 
     // MARK: - Correction categories
 
@@ -138,8 +179,8 @@ public enum Theme {
     public static func correctionColor(_ category: WeakSpotCategory?) -> Color {
         switch category {
         case .grammar: return danger
-        case .vocab: return Color(red: 0.13, green: 0.42, blue: 0.75)
-        case .filler: return Color(red: 0.42, green: 0.42, blue: 0.47)
+        case .vocab: return dynamic(light: (0.13, 0.42, 0.75), dark: (0.48, 0.74, 0.99))
+        case .filler: return dynamic(light: (0.42, 0.42, 0.47), dark: (0.70, 0.70, 0.75))
         case .fluency: return success
         case nil: return highlight
         }
@@ -165,6 +206,23 @@ public enum Theme {
         }
     }
 
+    // MARK: - Collection & domain icons
+
+    public static func collectionIcon(_ collection: PracticeViewModel.Collection) -> String {
+        switch collection {
+        case .all: return "square.grid.2x2"
+        case .domain(let domain): return domainIcon(domain)
+        case .tag(let tag): return tagIcon(tag)
+        }
+    }
+
+    public static func tagIcon(_ tag: String) -> String {
+        switch tag {
+        case "medical": return "stethoscope"
+        default: return "tag.fill"
+        }
+    }
+
     // MARK: - Domain icons
     public static func domainIcon(_ domain: ScenarioDomain) -> String {
         switch domain {
@@ -176,9 +234,22 @@ public enum Theme {
 
     public static func domainColor(_ domain: ScenarioDomain) -> Color {
         switch domain {
-        case .work: return Color(red: 0.13, green: 0.45, blue: 0.75)
-        case .networking: return Color(red: 0.72, green: 0.33, blue: 0.12)
-        case .social: return Color(red: 0.48, green: 0.33, blue: 0.88)
+        case .work: return dynamic(light: (0.13, 0.45, 0.75), dark: (0.45, 0.72, 0.99))
+        case .networking: return dynamic(light: (0.72, 0.33, 0.12), dark: (0.99, 0.65, 0.42))
+        case .social: return dynamic(light: (0.48, 0.33, 0.88), dark: (0.75, 0.63, 0.99))
+        }
+    }
+}
+
+public extension AppearancePreference {
+    /// `nil` means "don't override", which is how AppKit spells "follow the
+    /// system setting". Appearance is applied at the application level rather
+    /// than via `preferredColorScheme`, so this is the only mapping needed.
+    var nsAppearance: NSAppearance? {
+        switch self {
+        case .system: return nil
+        case .light: return NSAppearance(named: .aqua)
+        case .dark: return NSAppearance(named: .darkAqua)
         }
     }
 }

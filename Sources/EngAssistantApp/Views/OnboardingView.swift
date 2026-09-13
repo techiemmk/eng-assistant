@@ -106,6 +106,9 @@ public struct OnboardingView: View {
                 Text(label).font(Theme.cardTitle)
                 if case let .failed(msg) = status {
                     Text(msg).font(Theme.caption).foregroundStyle(Theme.danger)
+                } else if status == .running {
+                    ActivityLabel(text: "Checking", systemImage: "magnifyingglass",
+                                  font: Theme.caption)
                 } else {
                     Text(detail).font(Theme.caption).foregroundStyle(Theme.textSecondary)
                 }

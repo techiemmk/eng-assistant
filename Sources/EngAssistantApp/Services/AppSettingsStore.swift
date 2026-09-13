@@ -15,10 +15,17 @@ public final class AppSettingsStore: ObservableObject {
     @Published public private(set) var sttExecutablePath: String = ""
     @Published public private(set) var sttModelPath: String = ""
 
-    private let persister: SettingsPersisting
+    @Published public private(set) var appearance: AppearancePreference = AppDefaults.appearance
 
-    public init(persister: SettingsPersisting) {
+    private let persister: SettingsPersisting
+    private let applyToHost: AppearanceApplying
+
+    public init(
+        persister: SettingsPersisting,
+        applyAppearance: @escaping AppearanceApplying = AppAppearanceApplier.sharedApplication
+    ) {
         self.persister = persister
+        self.applyToHost = applyAppearance
     }
 
     public var isSTTConfigured: Bool {
@@ -35,6 +42,9 @@ public final class AppSettingsStore: ObservableObject {
             ?? AppDefaults.audioRetentionDays
         sttExecutablePath = nonEmpty(.sttExecutablePath) ?? autodetect.findExecutable() ?? ""
         sttModelPath = nonEmpty(.sttModelPath) ?? autodetect.findModel() ?? ""
+        appearance = (nonEmpty(.appearance).flatMap(AppearancePreference.init(rawValue:)))
+            ?? AppDefaults.appearance
+        applyToHost(appearance)
     }
 
     /// Called by `SettingsViewModel` once a save succeeds, so open screens pick
@@ -44,13 +54,26 @@ public final class AppSettingsStore: ObservableObject {
         defaultMode: SessionMode,
         audioRetentionDays: Int,
         sttExecutablePath: String,
-        sttModelPath: String
+        sttModelPath: String,
+        appearance: AppearancePreference
     ) {
         self.modelName = modelName.isEmpty ? AppDefaults.llmModelName : modelName
         self.defaultMode = defaultMode
         self.audioRetentionDays = audioRetentionDays
         self.sttExecutablePath = sttExecutablePath
         self.sttModelPath = sttModelPath
+        self.appearance = appearance
+        applyToHost(appearance)
+    }
+
+    /// The theme switch is the one setting that should take effect the instant
+    /// it's touched, rather than waiting for Save — you're picking it by looking
+    /// at the result. Applied here rather than by a view modifier so it reaches
+    /// the titlebar and menus as well as the content.
+    public func applyAppearance(_ appearance: AppearancePreference) {
+        self.appearance = appearance
+        try? persister.set(.appearance, value: appearance.rawValue)
+        applyToHost(appearance)
     }
 
     private func nonEmpty(_ key: AppSettingKey) -> String? {

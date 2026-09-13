@@ -13,6 +13,12 @@ final class InMemorySessionPersister: SessionPersisting, @unchecked Sendable {
         s.endedAt = endedAt; s.summary = summary; s.status = .ended
         sessions[id] = s
     }
+    func reactivate(id: UUID) throws {
+        guard var s = sessions[id] else { return }
+        s.status = .active
+        s.endedAt = nil
+        sessions[id] = s
+    }
     func listActive() throws -> [Session] {
         sessions.values.filter { $0.status == .active }
     }

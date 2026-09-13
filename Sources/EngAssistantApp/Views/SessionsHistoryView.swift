@@ -3,11 +3,17 @@ import Core
 
 public struct SessionsHistoryView: View {
     @ObservedObject var viewModel: SessionsHistoryViewModel
-    let onSelect: (UUID) -> Void
+    let onOpenDebrief: (UUID) -> Void
+    let onContinue: (Session) -> Void
 
-    public init(viewModel: SessionsHistoryViewModel, onSelect: @escaping (UUID) -> Void) {
+    public init(
+        viewModel: SessionsHistoryViewModel,
+        onOpenDebrief: @escaping (UUID) -> Void,
+        onContinue: @escaping (Session) -> Void
+    ) {
         self.viewModel = viewModel
-        self.onSelect = onSelect
+        self.onOpenDebrief = onOpenDebrief
+        self.onContinue = onContinue
     }
 
     public var body: some View {
@@ -22,7 +28,12 @@ public struct SessionsHistoryView: View {
 
             if viewModel.isLoading {
                 Spacer()
-                ProgressView().controlSize(.large)
+                ActivityLabel(
+                    text: "Loading sessions",
+                    systemImage: "clock.arrow.circlepath",
+                    font: Theme.body
+                )
+                .frame(maxWidth: .infinity)
                 Spacer()
             } else if viewModel.sessions.isEmpty {
                 Spacer()
@@ -37,9 +48,13 @@ public struct SessionsHistoryView: View {
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(viewModel.sessions) { session in
-                            SessionRowCard(session: session) {
-                                onSelect(session.id)
-                            }
+                            SessionRowCard(
+                                session: session,
+                                title: viewModel.title(for: session),
+                                canContinue: viewModel.canContinue(session),
+                                onTap: { onOpenDebrief(session.id) },
+                                onContinue: { onContinue(session) }
+                            )
                         }
                     }
                     .padding(.horizontal, 20)
@@ -55,7 +70,10 @@ public struct SessionsHistoryView: View {
 
 private struct SessionRowCard: View {
     let session: Session
+    let title: String
+    let canContinue: Bool
     let onTap: () -> Void
+    let onContinue: () -> Void
 
     var body: some View {
         Button(action: onTap) {
@@ -69,7 +87,7 @@ private struct SessionRowCard: View {
                         .foregroundStyle(Theme.brand)
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(session.scenarioId)
+                    Text(title)
                         .font(Theme.cardTitle)
                     HStack(spacing: 8) {
                         Label(session.startedAt.formatted(date: .abbreviated, time: .shortened),
@@ -80,6 +98,15 @@ private struct SessionRowCard: View {
                     }
                 }
                 Spacer()
+                Button(action: onContinue) {
+                    Label("Continue", systemImage: "play.fill")
+                        .font(Theme.chip)
+                }
+                .buttonStyle(.bordered)
+                .disabled(!canContinue)
+                .help(canContinue
+                      ? "Pick this conversation up where it left off"
+                      : "This scenario is no longer in the catalog")
                 Image(systemName: "chevron.right")
                     .font(Theme.caption)
                     .foregroundStyle(Theme.textSecondary)

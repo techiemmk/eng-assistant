@@ -187,15 +187,40 @@ what the UI renders — add new adapter errors as `LocalizedError` and it picks 
 
 **Type scale and palette live only in `Theme`.** Views must not reach for
 `.font(.caption)` or `.foregroundStyle(.secondary)`: the first makes text size
-untunable, and the second resolves against the system appearance, which fights a
-fixed light palette. `Theme.textScale` is the single knob for overall text size,
-and `Theme.Size` exposes the point values separately from the `Font` values
-because `Font` is opaque — `ThemeTypeScaleTests` asserts on those numbers.
-The app is pinned light in two places: `preferredColorScheme(.light)` for the
-SwiftUI content, and `NSApp.appearance = .aqua` in `AppDelegate` for the
-titlebar and menus, which follow the app appearance rather than the view tree.
-`ThemeLightPaletteTests` holds every accent to 4.5:1 against a white card, which
+untunable, and the second bypasses the light/dark pairs. `Theme.textScale` is
+the single knob for overall text size, and `Theme.Size` exposes the point values
+separately from the `Font` values because `Font` is opaque —
+`ThemeTypeScaleTests` asserts on those numbers.
+
+**Colours are dynamic pairs, and the theme is applied at the app level.** Each
+token is an `NSColor(name:dynamicProvider:)` that resolves per appearance at
+draw time, which keeps `Theme`'s API static with no environment plumbing.
+The switch itself goes through `NSApp.appearance`, *not*
+`preferredColorScheme` — setting it on the application covers the titlebar and
+menus, which sit outside the SwiftUI tree, and it avoids a trap: the `App` body
+cannot observe `AppSettingsStore`, because SwiftUI does not republish a nested
+`ObservableObject`, so a modifier reading `appState.settings?.appearance` would
+silently go stale. `AppSettingsStore` applies the change itself through an
+injected `AppearanceApplying` closure (`NSApp` is nil outside a real app
+process, so tests substitute a recorder). `ThemePaletteTests` holds every
+text colour to 4.5:1 against its own card surface *in both appearances*, which
 is what forced the original dark-background accents to be darkened.
+
+**Resuming a session** (`SessionEngine.resume(sessionId:)`) rebuilds
+`ChatHistory` from the stored turns instead of creating a session, so the model
+gets the earlier conversation back as context. Two turns are deliberately left
+out of that replay: turn 0 when it's the AI (the scenario's opening line was
+never in history — the model didn't author it, and replaying it teaches it to
+re-greet), and any turn marked incomplete (the user half of a turn whose reply
+failed, which would leave a dangling user message). An ended session is put back
+to `.active` via `SessionPersisting.reactivate`, which also clears `ended_at` so
+the duration spans the whole conversation. New turns continue the existing
+numbering.
+
+**Scenario collections.** `PracticeViewModel.Collection` is either a domain or a
+tag, because the work domain now holds both office and clinical scenarios. Tags
+that represent a whole track are listed in `PracticeViewModel.trackTags`, and a
+chip only appears if the catalog actually contains that track.
 
 **Coach mode's feedback path.** `PersonaBuilder` asks for
 `[[coach:<category>: try 'X' instead of 'Y']]` (or `drop 'Y'` for deletions) and
@@ -221,6 +246,9 @@ the first turn.
   finds it, and `AppContainer.makeSTTProvider(settings:)` falls back to
   `UnconfiguredSTTProvider` when it's absent.
 - **Progress Dashboard** screen — deferred.
+- **Medical scenarios sit in the `work` domain**, surfaced by the `medical` tag
+  rather than a domain of their own — deliberate, but if the clinical track
+  grows much further it probably wants its own `ScenarioDomain` case.
 - **Weak Spots Notebook** with mark-as-resolved UI — deferred. `WeakSpotRepository.markResolved` exists and is unused by any screen, so a weak spot can only stop being targeted by the merger aging it out.
 - **Audio replay buttons** in Debrief — deferred.
 - **Custom Scenario authoring UI** — deferred.

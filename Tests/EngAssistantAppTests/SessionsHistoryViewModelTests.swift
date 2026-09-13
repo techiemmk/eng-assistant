@@ -10,6 +10,11 @@ import Core
         func create(_ session: Session) throws { sessions.append(session) }
         func find(id: UUID) throws -> Session? { sessions.first { $0.id == id } }
         func finalize(id: UUID, endedAt: Date, summary: String?) throws {}
+        func reactivate(id: UUID) throws {
+            guard let i = sessions.firstIndex(where: { $0.id == id }) else { return }
+            sessions[i].status = .active
+            sessions[i].endedAt = nil
+        }
         func listActive() throws -> [Session] { sessions.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] {
             Array(sessions.sorted { $0.startedAt > $1.startedAt }.prefix(limit))

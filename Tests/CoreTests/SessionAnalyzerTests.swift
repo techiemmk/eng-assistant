@@ -16,6 +16,12 @@ import Fakes
         func create(_ session: Session) throws { sessions[session.id] = session }
         func find(id: UUID) throws -> Session? { sessions[id] }
         func finalize(id: UUID, endedAt: Date, summary: String?) throws {}
+        func reactivate(id: UUID) throws {
+            guard var s = sessions[id] else { return }
+            s.status = .active
+            s.endedAt = nil
+            sessions[id] = s
+        }
         func listActive() throws -> [Session] { Array(sessions.values) }
         func listRecent(limit: Int) throws -> [Session] {
             Array(sessions.values.sorted { $0.startedAt > $1.startedAt }.prefix(limit))

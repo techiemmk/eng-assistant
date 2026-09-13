@@ -22,6 +22,27 @@ public struct SettingsView: View {
 
             Form {
                 Section {
+                    Picker("Theme", selection: Binding(
+                        get: { viewModel.appearance },
+                        // Applied on pick rather than on Save: you choose a
+                        // theme by looking at it.
+                        set: { viewModel.selectAppearance($0) }
+                    )) {
+                        ForEach(AppearancePreference.allCases, id: \.self) { option in
+                            Label(option.label, systemImage: option.iconName).tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Label("Appearance", systemImage: "paintbrush.fill")
+                        .font(Theme.cardTitle)
+                } footer: {
+                    Text("System follows your Mac's light/dark setting.")
+                        .font(Theme.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+
+                Section {
                     HStack {
                         Image(systemName: "cpu.fill").foregroundStyle(Theme.brand).frame(width: 20)
                         TextField("Ollama model name", text: $viewModel.modelName)

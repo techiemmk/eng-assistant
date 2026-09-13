@@ -51,6 +51,16 @@ public final class SessionRepository {
     /// orphan recovery on app launch (they correspond to sessions that didn't
     /// finalize cleanly). Call this **before** creating a new session — otherwise
     /// the in-progress session will be returned alongside true orphans.
+    /// Clears `ended_at` as well as the status: a resumed session's duration
+    /// should span the whole conversation, not stop at the first ending.
+    public func reactivate(id: UUID) throws {
+        try database.queue.write { db in
+            try db.execute(sql: """
+                UPDATE sessions SET status = 'active', ended_at = NULL WHERE id = ?
+                """, arguments: [id.uuidString])
+        }
+    }
+
     public func listActive() throws -> [Session] {
         try database.queue.read { db in
             try Row.fetchAll(db, sql: "SELECT * FROM sessions WHERE status = 'active'")

@@ -6,7 +6,6 @@ import Adapters
 @main
 struct EngAssistantApp: App {
     @StateObject private var appState = AppState()
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
         WindowGroup(Theme.appName) {
@@ -27,28 +26,36 @@ struct EngAssistantApp: App {
             }
             .tint(Theme.brand)
             .fontDesign(.rounded)
-            // Theme's palette is fixed light values, so the window has to be
-            // light too — otherwise system dark mode would keep rendering the
-            // controls, form backgrounds, and text fields dark around it.
-            .preferredColorScheme(.light)
+            // Appearance is driven solely by NSApp.appearance (see
+            // AppAppearanceApplier), not preferredColorScheme. Setting it on the
+            // application propagates to the window, its titlebar and menus, and
+            // the SwiftUI content inside — and, unlike a modifier reading
+            // `appState.settings`, it doesn't depend on this body observing a
+            // nested ObservableObject, which SwiftUI wouldn't republish.
             .font(Theme.body)
             .foregroundStyle(Theme.textPrimary)
             .background(Theme.mutedSurface)
             .task {
                 await appState.bootstrap()
             }
+
         }
         .windowResizability(.contentSize)
     }
 }
 
-/// Exists only to pin the app's appearance. `preferredColorScheme(.light)`
-/// covers the SwiftUI content, but the window titlebar and menus follow the
-/// *app* appearance — so on a Mac set to dark, a light window would sit under a
-/// dark titlebar.
-final class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.appearance = NSAppearance(named: .aqua)
+/// Applies a theme choice to the whole application. Setting it here rather than
+/// with `preferredColorScheme` covers the titlebar and menus too, which sit
+/// outside the SwiftUI view tree; `nil` means "follow the Mac", which is how
+/// AppKit spells the System option.
+///
+/// Injected rather than called as a global so it can be substituted — `NSApp`
+/// is nil outside a real application process, including in tests.
+public typealias AppearanceApplying = @MainActor (AppearancePreference) -> Void
+
+public enum AppAppearanceApplier {
+    public static let sharedApplication: AppearanceApplying = { preference in
+        NSApp?.appearance = preference.nsAppearance
     }
 }
 

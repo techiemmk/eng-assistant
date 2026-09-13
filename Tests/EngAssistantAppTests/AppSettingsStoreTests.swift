@@ -92,7 +92,8 @@ import Core
             defaultMode: .flow,
             audioRetentionDays: 30,
             sttExecutablePath: "",
-            sttModelPath: ""
+            sttModelPath: "",
+            appearance: .system
         )
         #expect(store.modelName == AppDefaults.llmModelName)
     }

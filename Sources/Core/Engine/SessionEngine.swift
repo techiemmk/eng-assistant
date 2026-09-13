@@ -96,6 +96,64 @@ public actor SessionEngine {
         try await speakAndPersistOpeningLine(text: scenario.openingLine)
     }
 
+    /// Picks up an existing session instead of creating one. Replays its stored
+    /// turns back into a fresh `ChatHistory` so the model still has the earlier
+    /// conversation in context, and does *not* replay the opening line — the
+    /// user has already heard it.
+    ///
+    /// A session that was ended cleanly is put back into `.active`, since
+    /// continuing it means it isn't finished after all.
+    public func resume(sessionId: UUID) async throws {
+        guard let session = try sessionPersister.find(id: sessionId) else {
+            throw SessionEngineError.sessionNotFound(sessionId)
+        }
+        guard session.scenarioId == scenario.id else {
+            throw SessionEngineError.scenarioMismatch(
+                expected: scenario.id,
+                found: session.scenarioId
+            )
+        }
+
+        let storedTurns = try turnPersister.list(forSession: sessionId)
+        let systemPrompt = PersonaBuilder.build(
+            scenario: scenario,
+            mode: mode,
+            activeWeakSpots: activeWeakSpots
+        )
+        var history = ChatHistory(
+            systemPrompt: systemPrompt,
+            maxCharacterBudget: Self.defaultHistoryBudget
+        )
+        for turn in storedTurns {
+            // The opening line is turn 0 and was never in history — the model
+            // didn't author it, so replaying it as an assistant message would
+            // teach it to repeat the greeting.
+            if turn.turnIndex == 0 && turn.speaker == .ai { continue }
+            // Incomplete turns are the user half of a turn whose reply failed;
+            // including one would leave a dangling user message.
+            guard turn.isComplete else { continue }
+            history.append(role: turn.speaker == .user ? .user : .assistant, content: turn.text)
+        }
+
+        if session.status != .active {
+            try sessionPersister.reactivate(id: sessionId)
+        }
+
+        state = ActiveState(
+            sessionId: sessionId,
+            history: history,
+            nextTurnIndex: (storedTurns.map(\.turnIndex).max() ?? -1) + 1
+        )
+        isCapturing = false
+    }
+
+    /// The turns already stored for a resumed session, so the UI can show the
+    /// conversation so far rather than an empty transcript.
+    public func storedTurns() throws -> [Turn] {
+        guard let current = state else { throw SessionEngineError.notStarted }
+        return try turnPersister.list(forSession: current.sessionId)
+    }
+
     /// Opens the microphone and returns immediately. The caller decides when the
     /// turn is over — either by polling `captureHasEndpointed()` (VAD auto-stop)
     /// or on user action — and then calls `finishUserSpeech()`.
@@ -331,6 +389,11 @@ public actor SessionEngine {
 
 public enum SessionEngineError: Error, Equatable {
     case notStarted
+    /// `resume(sessionId:)` was given an id with no stored session.
+    case sessionNotFound(UUID)
+    /// `resume(sessionId:)` was given a session belonging to another scenario,
+    /// so the persona in this engine wouldn't match the conversation.
+    case scenarioMismatch(expected: String, found: String)
     /// `beginUserSpeech()` called while the mic was already open.
     case alreadyCapturing
     /// `finishUserSpeech()` called without a matching `beginUserSpeech()`.

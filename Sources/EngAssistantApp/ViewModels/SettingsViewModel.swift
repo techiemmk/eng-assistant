@@ -8,6 +8,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var audioRetentionDays: Int = AppDefaults.audioRetentionDays
     @Published public var sttExecutablePath: String = ""
     @Published public var sttModelPath: String = ""
+    @Published public var appearance: AppearancePreference = AppDefaults.appearance
 
     @Published public private(set) var savedNotice: String? = nil
     @Published public private(set) var lastError: String? = nil
@@ -51,6 +52,9 @@ public final class SettingsViewModel: ObservableObject {
                 ?? locator.findExecutable() ?? ""
             sttModelPath = (try persister.get(.sttModelPath).flatMap { $0.isEmpty ? nil : $0 })
                 ?? locator.findModel() ?? ""
+            if let v = try persister.get(.appearance), let a = AppearancePreference(rawValue: v) {
+                appearance = a
+            }
             lastError = nil
         } catch {
             lastError = "Load failed: \(error)"
@@ -65,18 +69,30 @@ public final class SettingsViewModel: ObservableObject {
             try persister.set(.audioRetentionDays, value: String(audioRetentionDays))
             try persister.set(.sttExecutablePath, value: sttExecutablePath)
             try persister.set(.sttModelPath, value: sttModelPath)
+            try persister.set(.appearance, value: appearance.rawValue)
             store?.apply(
                 modelName: modelName,
                 defaultMode: defaultMode,
                 audioRetentionDays: audioRetentionDays,
                 sttExecutablePath: sttExecutablePath,
-                sttModelPath: sttModelPath
+                sttModelPath: sttModelPath,
+                appearance: appearance
             )
             savedNotice = "Saved."
             lastError = nil
         } catch {
             lastError = "Save failed: \(error)"
             throw error
+        }
+    }
+
+    /// Applies and persists the theme immediately — no Save needed, because the
+    /// user is choosing it by looking at the result.
+    public func selectAppearance(_ appearance: AppearancePreference) {
+        self.appearance = appearance
+        store?.applyAppearance(appearance)
+        if store == nil {
+            try? persister.set(.appearance, value: appearance.rawValue)
         }
     }
 

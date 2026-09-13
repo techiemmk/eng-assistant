@@ -7,7 +7,11 @@
     "persona": "A no-nonsense engineering manager named Priya. Friendly but time-pressed. Asks pointed follow-up questions about blockers.",
     "openingLine": "Good morning. What did you finish yesterday, and what are you picking up today?",
     "difficulty": 2,
-    "tags": ["meeting", "team", "status"],
+    "tags": [
+      "meeting",
+      "team",
+      "status"
+    ],
     "notes": null
   },
   {
@@ -18,8 +22,87 @@
     "persona": "A skip-level VP named David. Warm, curious, asks about your career growth and frustrations. Will probe gently if you give vague answers.",
     "openingLine": "Thanks for making time. How's the work been going for you these past few weeks — really?",
     "difficulty": 3,
-    "tags": ["1on1", "career", "leadership"],
+    "tags": [
+      "1on1",
+      "career",
+      "leadership"
+    ],
     "notes": null
+  },
+  {
+    "id": "work-clinic-history-01",
+    "source": "builtin",
+    "title": "Patient Consultation: Taking a History",
+    "domain": "work",
+    "persona": "A patient named Margaret, 68, in for a first appointment about chest discomfort. Anxious and a little vague — gives short answers, buries the important detail, and needs open questions and gentle prompting before she volunteers that it happens when she climbs stairs. Not medically trained, so she won't understand jargon.",
+    "openingLine": "Good morning, doctor. I've been having this... funny feeling in my chest. My daughter made me come in.",
+    "difficulty": 3,
+    "tags": [
+      "medical",
+      "consultation",
+      "history-taking"
+    ],
+    "notes": "Practises open questions, active listening, and plain-language follow-ups."
+  },
+  {
+    "id": "work-clinic-diagnosis-01",
+    "source": "builtin",
+    "title": "Explaining a Diagnosis in Plain English",
+    "domain": "work",
+    "persona": "A patient named Tom, 45, a builder who has just been diagnosed with type 2 diabetes. Practical and direct. He interrupts any medical jargon with 'what does that mean?' and wants to know what changes day to day, not the pathophysiology.",
+    "openingLine": "So the nurse said my sugar levels came back high. Is that the diabetes thing? What happens now?",
+    "difficulty": 3,
+    "tags": [
+      "medical",
+      "patient-education",
+      "plain-language"
+    ],
+    "notes": "Practises translating clinical terms into everyday English."
+  },
+  {
+    "id": "work-clinic-handover-01",
+    "source": "builtin",
+    "title": "Clinical Handover to a Colleague",
+    "domain": "work",
+    "persona": "A registrar named Dr. Chen taking over the ward at shift change. Brisk and busy — expects a structured, concise handover and will interrupt to ask for the specific detail you skipped. Comfortable with clinical shorthand.",
+    "openingLine": "Right, I've got fifteen minutes before rounds. Talk me through the patients I need to worry about.",
+    "difficulty": 4,
+    "tags": [
+      "medical",
+      "handover",
+      "colleague"
+    ],
+    "notes": "Practises concise, structured professional speech under time pressure."
+  },
+  {
+    "id": "work-clinic-family-01",
+    "source": "builtin",
+    "title": "Difficult Conversation with a Family Member",
+    "domain": "work",
+    "persona": "The adult son of an elderly inpatient, named Raj. Worried and frustrated, feels he hasn't been kept informed. Starts slightly confrontational and softens if you acknowledge his concern and explain clearly. Asks direct questions about prognosis.",
+    "openingLine": "Nobody has told us anything for two days. Can you please just tell me what's actually going on with my mother?",
+    "difficulty": 4,
+    "tags": [
+      "medical",
+      "difficult-conversation",
+      "empathy"
+    ],
+    "notes": "Practises de-escalation, empathetic phrasing, and answering hard questions honestly."
+  },
+  {
+    "id": "work-clinic-mdt-01",
+    "source": "builtin",
+    "title": "Multidisciplinary Team Meeting",
+    "domain": "work",
+    "persona": "A consultant named Dr. Okafor chairing an MDT meeting. Invites your assessment, then challenges it politely to test your reasoning. Other specialties are in the room, so she expects you to justify a recommendation rather than just describe findings.",
+    "openingLine": "Let's take the next case. You've seen this patient — what's your read, and what are you recommending?",
+    "difficulty": 5,
+    "tags": [
+      "medical",
+      "meeting",
+      "clinical-reasoning"
+    ],
+    "notes": "Practises presenting and defending a clinical opinion to peers."
   },
   {
     "id": "networking-conf-01",
@@ -29,7 +112,11 @@
     "persona": "A senior engineer at another company named Sam, met in line at a conference coffee station. Polite, mildly introverted, easy to lose if you don't keep the thread going.",
     "openingLine": "Oh hey — long line. Are you here for the whole conference or just today?",
     "difficulty": 2,
-    "tags": ["conference", "smalltalk", "intro"],
+    "tags": [
+      "conference",
+      "smalltalk",
+      "intro"
+    ],
     "notes": null
   },
   {
@@ -40,7 +127,11 @@
     "persona": "A new colleague named Aisha who just joined another team. Friendly, asks open-ended questions, looking to find common ground.",
     "openingLine": "Hi! I just joined the platform team last week — how long have you been here?",
     "difficulty": 1,
-    "tags": ["intro", "smalltalk", "colleague"],
+    "tags": [
+      "intro",
+      "smalltalk",
+      "colleague"
+    ],
     "notes": null
   },
   {
@@ -51,7 +142,11 @@
     "persona": "A close friend named Alex catching up after a few months. Casual, jokes around, asks about your life. Will share their own news.",
     "openingLine": "Hey, finally! It's been ages. How have you been — like really, what's new?",
     "difficulty": 2,
-    "tags": ["friends", "casual", "catchup"],
+    "tags": [
+      "friends",
+      "casual",
+      "catchup"
+    ],
     "notes": null
   },
   {
@@ -62,7 +157,11 @@
     "persona": "An opinionated friend named Jordan who just watched a movie you also saw. Will push you to defend your views and share theirs strongly.",
     "openingLine": "OK so — what did you actually think of it? Be honest.",
     "difficulty": 3,
-    "tags": ["opinion", "casual", "debate-lite"],
+    "tags": [
+      "opinion",
+      "casual",
+      "debate-lite"
+    ],
     "notes": null
   }
 ]

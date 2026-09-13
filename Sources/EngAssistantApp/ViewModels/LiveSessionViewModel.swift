@@ -16,6 +16,9 @@ public final class LiveSessionViewModel: ObservableObject {
     /// True while the mic is open, i.e. between the two taps of push-to-talk.
     @Published public private(set) var isListening: Bool = false
     @Published public private(set) var lastError: String? = nil
+    /// True when this screen picked up an existing conversation rather than
+    /// opening a new one, so the header can say so.
+    @Published public private(set) var isResumed: Bool = false
 
     public let scenario: Scenario
     public let mode: SessionMode
@@ -69,6 +72,27 @@ public final class LiveSessionViewModel: ObservableObject {
             llmOptions: LLMOptions(modelName: modelName),
             audioFilePersister: audioFilePersister
         )
+    }
+
+    /// Continues an existing conversation: the engine reloads its context from
+    /// the stored turns and the transcript shows what was already said, instead
+    /// of replaying the scenario's opening line.
+    public func resume(sessionId: UUID) async throws {
+        isProcessing = true
+        defer { isProcessing = false }
+        do {
+            try await engine.resume(sessionId: sessionId)
+            let storedTurns = try await engine.storedTurns()
+            transcript = storedTurns.map {
+                DisplayTurn(speaker: $0.speaker, text: $0.text)
+            }
+            isActive = true
+            isResumed = true
+            lastError = nil
+        } catch {
+            lastError = "Could not continue session: \(FriendlyError.message(for: error))"
+            throw error
+        }
     }
 
     public func start() async throws {

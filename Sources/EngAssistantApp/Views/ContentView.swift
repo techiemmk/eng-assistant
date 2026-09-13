@@ -5,7 +5,8 @@ import Adapters
 
 enum AppPane: Hashable {
     case practice
-    case session(scenarioId: String, mode: SessionMode)
+    /// `resuming` carries the session to continue; nil opens a fresh one.
+    case session(scenarioId: String, mode: SessionMode, resuming: UUID?)
     case debrief(sessionId: UUID)
     case history
     case settings
@@ -50,9 +51,9 @@ public struct ContentView: View {
                     catalog: container.scenarioCatalog,
                     mode: settings.defaultMode
                 )) { scenario, mode in
-                    selection = .session(scenarioId: scenario.id, mode: mode)
+                    selection = .session(scenarioId: scenario.id, mode: mode, resuming: nil)
                 }
-            case .session(let scenarioId, let mode):
+            case .session(let scenarioId, let mode, let resuming):
                 if let scenario = container.scenarioCatalog.scenario(id: scenarioId) {
                     let vm = LiveSessionViewModel(
                         scenario: scenario,
@@ -73,7 +74,13 @@ public struct ContentView: View {
                     LiveSessionView(viewModel: vm) { sessionId in
                         selection = .debrief(sessionId: sessionId)
                     }
-                    .task { try? await vm.start() }
+                    .task {
+                        if let resuming {
+                            try? await vm.resume(sessionId: resuming)
+                        } else {
+                            try? await vm.start()
+                        }
+                    }
                 } else {
                     Text("Scenario not found")
                 }
@@ -89,9 +96,17 @@ public struct ContentView: View {
                 )
                 DebriefView(viewModel: DebriefViewModel(analyzer: analyzer, sessionId: sessionId))
             case .history:
-                SessionsHistoryView(viewModel: SessionsHistoryViewModel(persister: container.sessionRepository)) { id in
-                    selection = .debrief(sessionId: id)
-                }
+                SessionsHistoryView(
+                    viewModel: SessionsHistoryViewModel(persister: container.sessionRepository, catalog: container.scenarioCatalog),
+                    onOpenDebrief: { id in selection = .debrief(sessionId: id) },
+                    onContinue: { session in
+                        selection = .session(
+                            scenarioId: session.scenarioId,
+                            mode: session.mode,
+                            resuming: session.id
+                        )
+                    }
+                )
             case .settings:
                 SettingsView(viewModel: SettingsViewModel(persister: container.settingsRepository, store: settings))
             }

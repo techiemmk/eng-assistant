@@ -8,7 +8,17 @@ A native macOS app for practicing **advanced English conversation** with a local
 
 ## What it does
 
-You pick a scenario (work standup, conference small talk, dinner with friends, etc.) or describe one yourself. The app plays the AI persona's opening line, you push to talk (the mic stays open until you tap again or pause for ~1.5s), the AI responds in character. After you end the session, it analyzes the transcript and gives you a debrief: per-turn metrics, recurring weak spots it noticed across sessions, and suggested drills for next time.
+You pick a scenario (work standup, patient consultation, conference small talk, dinner with friends, etc.) or describe one yourself. The app plays the AI persona's opening line, you push to talk (the mic stays open until you tap again or pause for ~1.5s), the AI responds in character. After you end the session, it analyzes the transcript and gives you a debrief: per-turn metrics, recurring weak spots it noticed across sessions, and suggested drills for next time.
+
+Scenarios are grouped by domain — work, networking, social — plus a **Medical**
+track inside work for clinicians: taking a patient history, explaining a
+diagnosis in plain English, clinical handover, a difficult conversation with a
+family member, and presenting at an MDT meeting.
+
+You can also **continue** a past conversation instead of starting over: the
+Sessions list has a Continue button on every row, which reopens that session and
+replays its turns back into the model's context, so the persona picks up where
+it left off rather than greeting you again.
 
 Two modes:
 - **Flow** — AI stays in character, never breaks; feedback comes only at the debrief.
@@ -64,13 +74,13 @@ First launch: right-click the app in Finder → Open (Gatekeeper bypass for unsi
 
 ## Look and feel
 
-Fixed light appearance, pinned in both the SwiftUI content and the app
-appearance so a Mac set to dark mode doesn't render a dark titlebar around a
-light window. The type scale runs noticeably larger than macOS defaults (17pt
-body rather than 13pt); `Theme.textScale` in
+Light, dark, or follow-the-Mac, switchable in **Settings > Appearance** and
+applied the moment you pick it. Every colour is a light/dark pair, and tests
+hold each variant to a 4.5:1 contrast ratio against its own card surface rather
+than trusting the eye. The type scale runs noticeably larger than macOS defaults
+(17pt body rather than 13pt); `Theme.textScale` in
 [`Sources/EngAssistantApp/Theme.swift`](Sources/EngAssistantApp/Theme.swift) is
-the one knob if you want it larger or smaller again. Every accent colour is
-held to a 4.5:1 contrast ratio on a white card by tests rather than by eye.
+the one knob if you want it larger or smaller again.
 
 ## Architecture at a glance
 

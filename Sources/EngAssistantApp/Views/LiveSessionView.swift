@@ -46,15 +46,18 @@ public struct LiveSessionView: View {
                     .lineLimit(2)
                 HStack(spacing: 6) {
                     modeBadge
+                    if viewModel.isResumed {
+                        Label("Continued", systemImage: "arrow.uturn.forward")
+                            .font(Theme.chip)
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Theme.textSecondary.opacity(0.14))
+                            .foregroundStyle(Theme.textSecondary)
+                            .clipShape(Capsule())
+                    }
                     if viewModel.isListening {
-                        Label("Listening — speak now", systemImage: "waveform")
-                            .font(Theme.chip)
-                            .foregroundStyle(Theme.success)
-                            .symbolEffect(.variableColor.iterative, isActive: true)
+                        ListeningIndicator()
                     } else if viewModel.isProcessing {
-                        Label("Working...", systemImage: "ellipsis")
-                            .font(Theme.chip)
-                            .foregroundStyle(Theme.brand)
+                        ActivityLabel(text: "Working", systemImage: "gearshape.fill")
                     } else if viewModel.isActive {
                         Label("Your turn", systemImage: "circle.fill")
                             .font(Theme.chip)

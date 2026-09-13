@@ -29,12 +29,11 @@ public struct PracticeView: View {
                 .frame(width: 290)
             }
 
-            // Domain filters
+            // Collection filters — domains plus any distinct practice track.
             HStack(spacing: 8) {
-                domainChip(label: "All", icon: "square.grid.2x2", value: nil)
-                domainChip(label: "Work", icon: Theme.domainIcon(.work), value: .work)
-                domainChip(label: "Networking", icon: Theme.domainIcon(.networking), value: .networking)
-                domainChip(label: "Social", icon: Theme.domainIcon(.social), value: .social)
+                ForEach(viewModel.collections) { collection in
+                    collectionChip(collection)
+                }
                 Spacer()
             }
 
@@ -81,17 +80,18 @@ public struct PracticeView: View {
         .padding(20)
     }
 
-    private func domainChip(label: String, icon: String, value: ScenarioDomain?) -> some View {
-        let isActive = viewModel.domainFilter == value
+    private func collectionChip(_ collection: PracticeViewModel.Collection) -> some View {
+        let isActive = viewModel.collection == collection
         return Button {
-            viewModel.domainFilter = value
+            viewModel.collection = collection
+            viewModel.pruneSelectionIfHidden()
         } label: {
-            Label(label, systemImage: icon)
+            Label(collection.label, systemImage: Theme.collectionIcon(collection))
                 .font(Theme.chip)
                 .padding(.horizontal, 4)
         }
         .buttonStyle(.bordered)
-        .tint(isActive ? Theme.brand : .secondary)
+        .tint(isActive ? Theme.brand : Theme.textSecondary)
     }
 }
 

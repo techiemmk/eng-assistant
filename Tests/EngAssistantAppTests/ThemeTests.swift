@@ -43,88 +43,122 @@ import Core
     }
 }
 
-@Suite struct ThemeLightPaletteTests {
-    /// WCAG relative luminance, 0 (black) to 1 (white). The channel values
-    /// have to be linearized first — using the gamma-encoded components
-    /// directly overstates luminance for mid-tones and understates contrast.
-    private static func luminance(_ color: Color) -> CGFloat {
-        guard let srgb = NSColor(color).usingColorSpace(.sRGB) else { return -1 }
-        func linear(_ channel: CGFloat) -> CGFloat {
-            channel <= 0.04045 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
+/// Every colour is a light/dark pair resolved at draw time, so each assertion
+/// has to name the appearance it's checking — resolving one in the test process
+/// would otherwise just pick up whatever the Mac is set to.
+@MainActor
+@Suite struct ThemePaletteTests {
+    private static let appearances: [(name: String, appearance: NSAppearance)] = [
+        ("light", NSAppearance(named: .aqua)!),
+        ("dark", NSAppearance(named: .darkAqua)!),
+    ]
+
+    /// WCAG relative luminance, 0 (black) to 1 (white), resolved under a
+    /// specific appearance. The channel values have to be linearized first —
+    /// using the gamma-encoded components directly overstates luminance for
+    /// mid-tones and understates contrast.
+    private static func luminance(_ color: Color, in appearance: NSAppearance) -> CGFloat {
+        var result: CGFloat = -1
+        appearance.performAsCurrentDrawingAppearance {
+            guard let srgb = NSColor(color).usingColorSpace(.sRGB) else { return }
+            func linear(_ channel: CGFloat) -> CGFloat {
+                channel <= 0.04045 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
+            }
+            result = 0.2126 * linear(srgb.redComponent)
+                + 0.7152 * linear(srgb.greenComponent)
+                + 0.0722 * linear(srgb.blueComponent)
         }
-        return 0.2126 * linear(srgb.redComponent)
-            + 0.7152 * linear(srgb.greenComponent)
-            + 0.0722 * linear(srgb.blueComponent)
+        return result
     }
 
-    /// WCAG contrast ratio between two opaque colors.
-    private static func contrast(_ a: Color, _ b: Color) -> CGFloat {
-        let la = luminance(a) + 0.05
-        let lb = luminance(b) + 0.05
+    private static func contrast(_ a: Color, _ b: Color, in appearance: NSAppearance) -> CGFloat {
+        let la = luminance(a, in: appearance) + 0.05
+        let lb = luminance(b, in: appearance) + 0.05
         return max(la, lb) / min(la, lb)
     }
 
-    @Test func surfacesAreLight() {
-        #expect(Self.luminance(Theme.cardSurface) > 0.9)
-        #expect(Self.luminance(Theme.mutedSurface) > 0.85)
-    }
-
-    /// Cards sit on the page background, so the two can't be the same value or
-    /// the layout loses all structure.
-    @Test func cardStandsApartFromThePageBehindIt() {
-        #expect(Self.luminance(Theme.cardSurface) > Self.luminance(Theme.mutedSurface))
-    }
-
-    @Test func textIsDarkOnLightSurfaces() {
-        #expect(Self.luminance(Theme.textPrimary) < 0.2)
-        #expect(Self.luminance(Theme.textSecondary) < 0.5)
-    }
-
-    /// Both are used at 13-17pt, so both need the 4.5:1 normal-text threshold.
-    @Test func textMeetsContrastOnCards() {
-        #expect(Self.contrast(Theme.textPrimary, Theme.cardSurface) >= 4.5)
-        #expect(Self.contrast(Theme.textSecondary, Theme.cardSurface) >= 4.5)
-    }
-
-    /// These are all used as small colored text on a white card, which is
-    /// exactly where an accent picked for a dark background stops being
-    /// legible — every one of these had to be darkened for the light theme.
-    @Test func accentsStayLegibleAsTextOnWhite() {
-        let accents: [(String, Color)] = [
+    /// Every colour used as text sits on a card, so every one needs the 4.5:1
+    /// normal-text threshold — in both appearances.
+    private static var textColors: [(String, Color)] {
+        var colors: [(String, Color)] = [
+            ("textPrimary", Theme.textPrimary),
+            ("textSecondary", Theme.textSecondary),
             ("brand", Theme.brand),
             ("highlight", Theme.highlight),
             ("success", Theme.success),
             ("warning", Theme.warning),
             ("danger", Theme.danger),
         ]
-        for (name, color) in accents {
-            let ratio = Self.contrast(color, Theme.cardSurface)
-            #expect(ratio >= 4.5, "\(name) only reaches \(ratio):1 on a card")
+        colors += WeakSpotCategory.allCases.map {
+            ("correction:\($0.rawValue)", Theme.correctionColor($0))
+        }
+        colors += ScenarioDomain.allCases.map {
+            ("domain:\($0.rawValue)", Theme.domainColor($0))
+        }
+        return colors
+    }
+
+    @Test func lightAppearanceHasLightSurfacesAndDarkText() {
+        let light = NSAppearance(named: .aqua)!
+        #expect(Self.luminance(Theme.cardSurface, in: light) > 0.9)
+        #expect(Self.luminance(Theme.mutedSurface, in: light) > 0.85)
+        #expect(Self.luminance(Theme.textPrimary, in: light) < 0.2)
+    }
+
+    /// The whole point of the theme switch: the same tokens have to flip, not
+    /// just sit there being light.
+    @Test func darkAppearanceHasDarkSurfacesAndLightText() {
+        let dark = NSAppearance(named: .darkAqua)!
+        #expect(Self.luminance(Theme.cardSurface, in: dark) < 0.1)
+        #expect(Self.luminance(Theme.mutedSurface, in: dark) < 0.1)
+        #expect(Self.luminance(Theme.textPrimary, in: dark) > 0.7)
+    }
+
+    @Test func surfacesActuallyDifferBetweenAppearances() {
+        let light = NSAppearance(named: .aqua)!
+        let dark = NSAppearance(named: .darkAqua)!
+        // A token that resolved the same in both would mean the dynamic
+        // provider isn't being consulted at all.
+        #expect(Self.luminance(Theme.cardSurface, in: light)
+                != Self.luminance(Theme.cardSurface, in: dark))
+        #expect(Self.luminance(Theme.textPrimary, in: light)
+                != Self.luminance(Theme.textPrimary, in: dark))
+    }
+
+    /// Cards sit above the page in both appearances — same relationship, not
+    /// the same direction of lightness.
+    @Test func cardStandsApartFromThePageBehindIt() {
+        for (name, appearance) in Self.appearances {
+            let card = Self.luminance(Theme.cardSurface, in: appearance)
+            let page = Self.luminance(Theme.mutedSurface, in: appearance)
+            #expect(card != page, "card and page are identical in \(name)")
         }
     }
 
-    @Test func correctionColorsStayLegibleAsTextOnWhite() {
-        for category in WeakSpotCategory.allCases {
-            let ratio = Self.contrast(Theme.correctionColor(category), Theme.cardSurface)
-            #expect(ratio >= 4.5, "\(category.rawValue) only reaches \(ratio):1 on a card")
+    @Test func everyTextColorMeetsContrastInBothAppearances() {
+        for (appearanceName, appearance) in Self.appearances {
+            for (colorName, color) in Self.textColors {
+                let ratio = Self.contrast(color, Theme.cardSurface, in: appearance)
+                #expect(
+                    ratio >= 4.5,
+                    "\(colorName) only reaches \(ratio):1 on a \(appearanceName) card"
+                )
+            }
         }
     }
 
-    @Test func domainColorsStayLegibleAsTextOnWhite() {
-        for domain in ScenarioDomain.allCases {
-            let ratio = Self.contrast(Theme.domainColor(domain), Theme.cardSurface)
-            #expect(ratio >= 4.5, "\(domain.rawValue) only reaches \(ratio):1 on a card")
-        }
-    }
-
-    /// The separator is what gives a white card an edge against the off-white
-    /// page, so it has to be darker than both.
+    /// The separator is what gives a card an edge against the page, so it has
+    /// to be distinguishable from both — darker in light mode, lighter in dark.
     @Test func separatorIsVisibleAgainstBothSurfaces() {
-        #expect(Self.luminance(Theme.separator) < Self.luminance(Theme.mutedSurface))
-        #expect(Self.luminance(Theme.separator) < Self.luminance(Theme.cardSurface))
+        let light = NSAppearance(named: .aqua)!
+        #expect(Self.luminance(Theme.separator, in: light) < Self.luminance(Theme.cardSurface, in: light))
+
+        let dark = NSAppearance(named: .darkAqua)!
+        #expect(Self.luminance(Theme.separator, in: dark) > Self.luminance(Theme.cardSurface, in: dark))
     }
 }
 
+@MainActor
 @Suite struct ThemeHeroGradientTests {
     private static func luminance(_ color: Color) -> CGFloat {
         guard let srgb = NSColor(color).usingColorSpace(.sRGB) else { return -1 }

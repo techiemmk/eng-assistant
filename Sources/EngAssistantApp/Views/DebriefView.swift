@@ -21,8 +21,11 @@ public struct DebriefView: View {
                 if viewModel.isLoading {
                     HStack(spacing: 10) {
                         ProgressView().controlSize(.regular)
-                        Text("Analyzing your session...")
-                            .foregroundStyle(Theme.textSecondary)
+                        ActivityLabel(
+                            text: "Analyzing your session",
+                            systemImage: "wand.and.stars",
+                            font: Theme.body
+                        )
                     }
                 } else if let err = viewModel.lastError {
                     Label(err, systemImage: "exclamationmark.triangle.fill")
