@@ -2,7 +2,7 @@ import Foundation
 import Core
 import GRDB
 
-public final class SessionRepository {
+public final class SessionRepository: SessionPersisting {
     private let database: Database
 
     public init(database: Database) {

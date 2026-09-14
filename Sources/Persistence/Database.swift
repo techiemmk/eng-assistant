@@ -1,7 +1,12 @@
 import Foundation
 import GRDB
 
-public final class Database {
+/// The `Sendable` conformance is checked, not asserted: the only stored
+/// property is an immutable `let` of GRDB's `DatabaseQueue`, which is itself
+/// `Sendable` (`DatabaseReader: AnyObject, Sendable`, and `DatabaseQueue`
+/// conforms to it). Repositories hold a `Database` and conform to `Sendable`
+/// persister protocols, so without this they can't be checked either.
+public final class Database: Sendable {
     public let queue: DatabaseQueue
 
     private init(queue: DatabaseQueue) {

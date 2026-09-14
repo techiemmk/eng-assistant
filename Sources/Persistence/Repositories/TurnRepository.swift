@@ -2,7 +2,7 @@ import Foundation
 import Core
 import GRDB
 
-public final class TurnRepository {
+public final class TurnRepository: TurnPersisting {
     private let database: Database
 
     public init(database: Database) {

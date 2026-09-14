@@ -66,7 +66,11 @@ final class AppState: ObservableObject {
     /// How long the launch screen stays up at minimum. Bootstrap is usually
     /// faster than this, so the number is a deliberate pause rather than a
     /// measurement — injectable so tests don't sit through it.
-    static let defaultLaunchHold: Duration = .seconds(3)
+    ///
+    /// `nonisolated` because it's read as a default argument of `init`, and
+    /// default arguments are evaluated outside the actor. Safe to expose that
+    /// way: it's an immutable `let` of a `Sendable` type.
+    nonisolated static let defaultLaunchHold: Duration = .seconds(3)
 
     @Published var isLaunching: Bool = true
     @Published var didCompleteOnboarding: Bool = false

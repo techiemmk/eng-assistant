@@ -25,11 +25,7 @@ public final class AVAudioCaptureImpl: AudioCapture, @unchecked Sendable {
     }
 
     public func startRecording() async throws {
-        lock.lock()
-        buffer.removeAll(keepingCapacity: true)
-        vad.reset()
-        endpointed = false
-        lock.unlock()
+        resetCaptureState()
 
         let input = engine.inputNode
         let inputFormat = input.outputFormat(forBus: 0)
@@ -83,11 +79,7 @@ public final class AVAudioCaptureImpl: AudioCapture, @unchecked Sendable {
     public func stopRecording() async throws -> Data {
         engine.stop()
         engine.inputNode.removeTap(onBus: 0)
-        lock.lock()
-        let captured = buffer
-        buffer.removeAll(keepingCapacity: false)
-        lock.unlock()
-        return WAVCodec.encode(pcm: captured, sampleRate: sampleRate)
+        return WAVCodec.encode(pcm: takeCapturedSamples(), sampleRate: sampleRate)
     }
 
     /// Returns true if VAD detected end-of-speech during recording. Callers can
@@ -102,5 +94,29 @@ public final class AVAudioCaptureImpl: AudioCapture, @unchecked Sendable {
     /// `AudioCapture` conformance — the async face of `isEndpointed()`.
     public func hasEndpointed() async -> Bool {
         isEndpointed()
+    }
+
+    // MARK: - locked state
+    //
+    // These are synchronous on purpose. `NSLock.lock()` is unavailable from an
+    // async context — holding a lock across a suspension point risks deadlock —
+    // so the critical sections live in non-async helpers that the async methods
+    // call. Nothing awaits between the lock and the unlock.
+
+    private func resetCaptureState() {
+        lock.lock()
+        defer { lock.unlock() }
+        buffer.removeAll(keepingCapacity: true)
+        vad.reset()
+        endpointed = false
+    }
+
+    /// Hands back everything captured so far and clears the buffer.
+    private func takeCapturedSamples() -> [Int16] {
+        lock.lock()
+        defer { lock.unlock() }
+        let captured = buffer
+        buffer.removeAll(keepingCapacity: false)
+        return captured
     }
 }

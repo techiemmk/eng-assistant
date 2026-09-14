@@ -2,7 +2,7 @@ import Foundation
 import Core
 import GRDB
 
-public final class WeakSpotRepository {
+public final class WeakSpotRepository: WeakSpotPersisting {
     private let database: Database
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()

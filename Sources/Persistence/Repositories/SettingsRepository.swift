@@ -2,7 +2,7 @@ import Foundation
 import Core
 import GRDB
 
-public final class SettingsRepository {
+public final class SettingsRepository: SettingsPersisting {
     private let database: Database
 
     public init(database: Database) {

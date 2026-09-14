@@ -241,6 +241,35 @@ icon doesn't error, macOS just substitutes the generic placeholder, which is how
 this shipped unnoticed for so long. `AppIconTests` guards the artefact, its
 size ladder, and the plist keys.
 
+**The build is warning-free; keep it that way.** `swift build` and `bin/test.sh`
+both emit zero warnings from first-party code. They emitted 19 until recently,
+all of them data-race diagnostics carrying *"this is an error in the Swift 6
+language mode"*, so the count is also the distance to a Swift 6 migration. Four
+patterns are worth knowing because they're easy to reintroduce:
+
+- **A `Sendable` conformance must be declared in the same file as the type.**
+  The `*Persisting` protocols are all `: Sendable`, so conforming to one in a
+  separate extension file means the compiler can't check the stored properties.
+  Declare persister conformance on the class itself.
+- **`Database` is `Sendable`, and checked — not `@unchecked`.** It holds one
+  immutable `let` of GRDB's `DatabaseQueue`, which is itself `Sendable`
+  (`DatabaseReader: AnyObject, Sendable`). Anything new stored on `Database` has
+  to be `Sendable` too, or every repository stops compiling cleanly.
+- **Don't capture a mutable `var` in a concurrently-executing closure**, even
+  with a lock beside it — the lock isn't visible to the checker. Put the state
+  in a reference type that owns its own lock; `ProcessOutputBuffers` in
+  `ForegroundProcessRunner.swift` is the pattern, and its `@unchecked Sendable`
+  is earned rather than waved through (every access goes through the lock, and
+  the buffers are private). Tests use the same shape — see `URLRecorder` in
+  `HealthCheckTests` and `AppearanceRecorder` in `AppearancePreferenceTests`.
+- **`NSLock.lock()` is unavailable from an `async` context** (holding a lock
+  across a suspension risks deadlock). Keep critical sections in synchronous
+  helpers that async methods call — see `resetCaptureState()` /
+  `takeCapturedSamples()` in `AVAudioCaptureImpl`.
+- **A `static let` on a `@MainActor` type needs `nonisolated`** if it's read as
+  a default argument, because default arguments are evaluated off the actor —
+  see `AppState.defaultLaunchHold`.
+
 **Status labels must not move their own text.** `ActivityLabel` keeps the words
 outside its `TimelineView` and animates only three fixed-size dots by opacity.
 An earlier version animated the whole row and grew a "•" string from one dot to
@@ -301,4 +330,3 @@ the first turn.
 - **Session resume** after a crash — the data layer supports it (`SessionPersisting.listActive`), but the UI doesn't expose it yet.
 - **`LiveSessionViewModel`** uses `engine.sessionForTesting()` from production code — label smell, harmless today, plan to clean up.
 - **View models rebuild on every navigation switch** in `ContentView` — a Settings page with unsaved edits will lose them on tab change.
-- **Pre-existing Sendable warnings** on `Database` and `WeakSpotRepository` — known, deferred.

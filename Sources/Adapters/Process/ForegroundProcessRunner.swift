@@ -28,11 +28,13 @@ public struct ForegroundProcessRunner: ProcessRunner {
                 process.standardInput = stdinPipe
             }
 
-            // Concurrent buffers protected by a lock — stdout/stderr handlers
-            // and the termination handler all touch them.
-            let lock = NSLock()
-            var stdoutBuffer = Data()
-            var stderrBuffer = Data()
+            // The stdout/stderr handlers and the termination handler all run
+            // on different threads and all touch these buffers. They were
+            // captured `var`s guarded by a separate lock, which is correct but
+            // unprovable — the compiler sees a mutable capture in a concurrent
+            // closure and can't tell the lock covers it. Holding them behind a
+            // reference type that owns its own lock makes the safety checkable.
+            let output = ProcessOutputBuffers()
 
             stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
                 let chunk = handle.availableData
@@ -40,9 +42,7 @@ public struct ForegroundProcessRunner: ProcessRunner {
                     handle.readabilityHandler = nil
                     return
                 }
-                lock.lock()
-                stdoutBuffer.append(chunk)
-                lock.unlock()
+                output.appendStandardOutput(chunk)
             }
             stderrPipe.fileHandleForReading.readabilityHandler = { handle in
                 let chunk = handle.availableData
@@ -50,9 +50,7 @@ public struct ForegroundProcessRunner: ProcessRunner {
                     handle.readabilityHandler = nil
                     return
                 }
-                lock.lock()
-                stderrBuffer.append(chunk)
-                lock.unlock()
+                output.appendStandardError(chunk)
             }
 
             process.terminationHandler = { proc in
@@ -61,16 +59,12 @@ public struct ForegroundProcessRunner: ProcessRunner {
                 let errRest = (try? stderrPipe.fileHandleForReading.readToEnd()) ?? nil
                 stdoutPipe.fileHandleForReading.readabilityHandler = nil
                 stderrPipe.fileHandleForReading.readabilityHandler = nil
-                lock.lock()
-                if let r = outRest { stdoutBuffer.append(r) }
-                if let r = errRest { stderrBuffer.append(r) }
-                let out = stdoutBuffer
-                let err = stderrBuffer
-                lock.unlock()
+                let collected = output.drain(appendingStandardOutput: outRest,
+                                             standardError: errRest)
                 continuation.resume(returning: ProcessResult(
                     exitCode: proc.terminationStatus,
-                    stdout: out,
-                    stderr: err
+                    stdout: collected.stdout,
+                    stderr: collected.stderr
                 ))
             }
 
@@ -94,5 +88,43 @@ public struct ForegroundProcessRunner: ProcessRunner {
                 continuation.resume(throwing: ProcessRunnerError.launchFailed("\(error)"))
             }
         }
+    }
+}
+
+/// Accumulates a subprocess's two output streams from whichever thread the
+/// pipe handlers happen to run on.
+///
+/// `@unchecked Sendable` is load-bearing here rather than a shrug: every access
+/// to the two buffers goes through `lock`, and they are `private` so there is no
+/// way to reach them otherwise. That's the invariant the compiler can't verify
+/// for itself.
+private final class ProcessOutputBuffers: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stdout = Data()
+    private var stderr = Data()
+
+    func appendStandardOutput(_ chunk: Data) {
+        lock.lock()
+        defer { lock.unlock() }
+        stdout.append(chunk)
+    }
+
+    func appendStandardError(_ chunk: Data) {
+        lock.lock()
+        defer { lock.unlock() }
+        stderr.append(chunk)
+    }
+
+    /// Adds any final bytes and returns both buffers in one critical section,
+    /// so the result can't straddle a concurrent append.
+    func drain(
+        appendingStandardOutput outRest: Data?,
+        standardError errRest: Data?
+    ) -> (stdout: Data, stderr: Data) {
+        lock.lock()
+        defer { lock.unlock() }
+        if let outRest { stdout.append(outRest) }
+        if let errRest { stderr.append(errRest) }
+        return (stdout, stderr)
     }
 }
