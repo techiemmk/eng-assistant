@@ -8,7 +8,7 @@ import Foundation
             id: "work-standup-01",
             source: .builtin,
             title: "Daily Standup",
-            domain: .corporate,
+            domain: .workplace,
             persona: "A no-nonsense engineering manager.",
             openingLine: "Good morning, what did you finish yesterday?",
             difficulty: 2,
@@ -26,7 +26,7 @@ import Foundation
         #expect(ScenarioDomain.allCases.contains(.medical))
         #expect(ScenarioDomain.allCases.contains(.networking))
         #expect(ScenarioDomain.allCases.contains(.social))
-        #expect(ScenarioDomain.allCases.contains(.corporate))
+        #expect(ScenarioDomain.allCases.contains(.workplace))
     }
 }
 

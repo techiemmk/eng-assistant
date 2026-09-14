@@ -58,7 +58,7 @@ public struct SessionAnalyzer: Sendable, SessionAnalyzing {
             // The real domain is unknowable here — the scenario is gone and
             // sessions don't record it. Only the debrief's icon and colour read
             // this, so a neutral placeholder is enough.
-            domain: .corporate,
+            domain: .workplace,
             persona: session.personaSnapshot,
             openingLine: "",
             difficulty: 2,

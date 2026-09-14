@@ -222,7 +222,7 @@ the duration spans the whole conversation. New turns continue the existing
 numbering.
 
 **Scenario domains are the filter chips.** There are five — homeopathy,
-medical, networking, social, corporate — and every scenario belongs to exactly
+medical, networking, social, workplace — and every scenario belongs to exactly
 one, so they partition the catalog (`HomeopathyScenarioTests.domainsPartitionTheCatalog`).
 Chip order comes from `ScenarioDomain.displayOrder`, declared explicitly rather
 than relying on `allCases` so that reordering the enum can't silently reshuffle

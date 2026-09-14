@@ -22,7 +22,7 @@ import Core
             summary: nil, personaSnapshot: "p"
         )
         let scenario = Scenario(
-            id: "x", source: .builtin, title: "Test", domain: .corporate,
+            id: "x", source: .builtin, title: "Test", domain: .workplace,
             persona: "p", openingLine: "Hi.",
             difficulty: 2, tags: [], notes: nil
         )

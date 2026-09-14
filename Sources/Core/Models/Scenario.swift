@@ -16,7 +16,7 @@ public enum ScenarioDomain: String, Codable, Equatable, Sendable, CaseIterable {
     case medical
     case networking
     case social
-    case corporate
+    case workplace
 
     /// The order the filter chips appear in. Declared explicitly rather than
     /// leaning on `allCases`, so reordering the enum can't silently reshuffle
@@ -24,7 +24,7 @@ public enum ScenarioDomain: String, Codable, Equatable, Sendable, CaseIterable {
     /// by `ScenarioDomainTests.displayOrderCoversEveryDomain` instead of just
     /// vanishing from the screen.
     public static let displayOrder: [ScenarioDomain] = [
-        .homeopathy, .medical, .networking, .social, .corporate,
+        .homeopathy, .medical, .networking, .social, .workplace,
     ]
 
     /// Title-cased for display. Every case happens to capitalise cleanly.

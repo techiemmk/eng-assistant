@@ -10,7 +10,7 @@ import Fakes
 @MainActor
 @Suite struct CoachWiringTests {
     private static let scenario = Scenario(
-        id: "coach-01", source: .builtin, title: "Coach", domain: .corporate,
+        id: "coach-01", source: .builtin, title: "Coach", domain: .workplace,
         persona: "Test persona.", openingLine: "Hi.",
         difficulty: 2, tags: [], notes: nil
     )

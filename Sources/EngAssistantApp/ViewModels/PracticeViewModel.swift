@@ -8,7 +8,7 @@ public final class PracticeViewModel: ObservableObject {
     ///
     /// This briefly also carried a `tag` case, back when the single broad
     /// `work` domain had to be sliced up by tag to be navigable. Splitting
-    /// `work` into `corporate` / `medical` / `homeopathy` made that
+    /// `work` into `workplace` / `medical` / `homeopathy` made that
     /// unnecessary — domains partition the catalog on their own now.
     public enum Collection: Hashable, Identifiable {
         case all

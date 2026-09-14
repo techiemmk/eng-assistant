@@ -25,7 +25,7 @@ chips on the Practice screen:
   presenting at an MDT meeting.
 - **Networking** (2) — conference small talk, meeting a new colleague.
 - **Social** (2) — dinner with friends, defending an opinion about a film.
-- **Corporate** (2) — the daily engineering standup and a skip-level 1:1 with a
+- **Workplace** (2) — the daily engineering standup and a skip-level 1:1 with a
   VP.
 
 You can also **continue** a past conversation instead of starting over: the

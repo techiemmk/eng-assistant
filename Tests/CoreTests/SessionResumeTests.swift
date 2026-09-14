@@ -7,7 +7,7 @@ import Fakes
 /// without replaying the greeting or re-numbering the turns.
 @Suite struct SessionResumeTests {
     private static let scenario = Scenario(
-        id: "resume-01", source: .builtin, title: "Resume", domain: .corporate,
+        id: "resume-01", source: .builtin, title: "Resume", domain: .workplace,
         persona: "Test persona.", openingLine: "Morning.",
         difficulty: 2, tags: [], notes: nil
     )

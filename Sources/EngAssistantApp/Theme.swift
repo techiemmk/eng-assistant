@@ -223,7 +223,7 @@ public enum Theme {
         case .medical: return "stethoscope"
         case .networking: return "person.2.wave.2.fill"
         case .social: return "party.popper.fill"
-        case .corporate: return "briefcase.fill"
+        case .workplace: return "briefcase.fill"
         }
     }
 
@@ -235,7 +235,7 @@ public enum Theme {
         case .medical: return dynamic(light: (0.04, 0.38, 0.42), dark: (0.35, 0.85, 0.88))
         case .networking: return dynamic(light: (0.72, 0.33, 0.12), dark: (0.99, 0.65, 0.42))
         case .social: return dynamic(light: (0.48, 0.33, 0.88), dark: (0.75, 0.63, 0.99))
-        case .corporate: return dynamic(light: (0.13, 0.45, 0.75), dark: (0.45, 0.72, 0.99))
+        case .workplace: return dynamic(light: (0.13, 0.45, 0.75), dark: (0.45, 0.72, 0.99))
         }
     }
 }

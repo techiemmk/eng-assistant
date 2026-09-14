@@ -3,8 +3,9 @@ import Foundation
 import Core
 @testable import EngAssistantApp
 
-/// The chip row filters by domain *or* by practice track, because the work
-/// domain now holds both office and clinical scenarios.
+/// The chip row is All plus one chip per practice domain, in a deliberate
+/// order. These cover that order, that every chip leads somewhere, and that
+/// between them the chips reach every scenario.
 @MainActor
 @Suite struct PracticeCollectionTests {
     private static func viewModel() throws -> PracticeViewModel {
@@ -27,28 +28,28 @@ import Core
             .domain(.medical),
             .domain(.networking),
             .domain(.social),
-            .domain(.corporate),
+            .domain(.workplace),
         ])
     }
 
     @Test func chipLabelsReadAsRequested() throws {
         let vm = try Self.viewModel()
         #expect(vm.collections.map(\.label) == [
-            "All", "Homeopathy", "Medical", "Networking", "Social", "Corporate",
+            "All", "Homeopathy", "Medical", "Networking", "Social", "Workplace",
         ])
     }
 
-    /// `work` was replaced, not hidden. The chip is gone, and Corporate is
+    /// `work` was replaced, not hidden. The chip is gone, and Workplace is
     /// what took over the scenarios that were in it.
     @Test func thereIsNoWorkChip() throws {
         let vm = try Self.viewModel()
         #expect(!vm.collections.map(\.label).contains("Work"))
-        #expect(vm.collections.contains(.domain(.corporate)))
+        #expect(vm.collections.contains(.domain(.workplace)))
     }
 
-    @Test func filteringByCorporateShowsOnlyTheOfficeScenarios() throws {
+    @Test func filteringByWorkplaceShowsOnlyTheOfficeScenarios() throws {
         let vm = try Self.viewModel()
-        vm.collection = .domain(.corporate)
+        vm.collection = .domain(.workplace)
         let ids = vm.filteredScenarios.map(\.id)
         #expect(ids.sorted() == ["work-1on1-01", "work-standup-01"])
     }

@@ -13,7 +13,7 @@ import Core
             id: id,
             source: .custom,
             title: "Manager 1:1 Tomorrow",
-            domain: .corporate,
+            domain: .workplace,
             persona: "My new manager Priya, friendly but skeptical.",
             openingLine: "So, how's it been going?",
             difficulty: 3,

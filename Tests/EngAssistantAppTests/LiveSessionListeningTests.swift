@@ -10,7 +10,7 @@ import Fakes
 @MainActor
 @Suite struct LiveSessionListeningTests {
     private static let scenario = Scenario(
-        id: "listen-01", source: .builtin, title: "Listen", domain: .corporate,
+        id: "listen-01", source: .builtin, title: "Listen", domain: .workplace,
         persona: "Test persona.", openingLine: "Hi.",
         difficulty: 2, tags: [], notes: nil
     )

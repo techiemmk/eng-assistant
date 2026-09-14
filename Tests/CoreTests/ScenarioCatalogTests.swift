@@ -71,14 +71,14 @@ import Testing
         #expect(Set(ids).count == ids.count)
     }
 
-    /// The office scenarios that used to sit in `work` moved to `corporate`
+    /// The office scenarios that used to sit in `work` moved to `workplace`
     /// rather than being dropped in the split.
-    @Test func corporateScenariosSurvivedTheSplit() throws {
-        let corporate = try Self.catalog().scenarios(in: .corporate)
-        #expect(corporate.count >= 2)
-        let ids = corporate.map(\.id)
-        #expect(ids.contains("work-standup-01"), "the daily standup should be corporate")
-        #expect(ids.contains("work-1on1-01"), "the skip-level 1:1 should be corporate")
+    @Test func workplaceScenariosSurvivedTheSplit() throws {
+        let workplace = try Self.catalog().scenarios(in: .workplace)
+        #expect(workplace.count >= 2)
+        let ids = workplace.map(\.id)
+        #expect(ids.contains("work-standup-01"), "the daily standup should be workplace")
+        #expect(ids.contains("work-1on1-01"), "the skip-level 1:1 should be workplace")
     }
 }
 
@@ -135,13 +135,13 @@ import Testing
     /// different language problems.
     @Test func homeopathyScenariosCoverDistinctConversationTypes() throws {
         let scenarios = try Self.catalog().scenarios(in: .homeopathy)
-        let secondaryTags = Set(scenarios.flatMap(\.tags)).subtracting(["homeopathy"])
+        let secondaryTags = Set(scenarios.flatMap(\.tags))
         #expect(secondaryTags.count >= 4, "only \(secondaryTags.count) distinct kinds")
     }
 }
 
 
-/// Case-taking is the core skill of a homeopathic consultation, so the track
+/// Case-taking is the core skill of a homeopathic consultation, so the domain
 /// carries several of them at different levels of difficulty — each one a
 /// distinct language problem rather than the same interview again.
 @Suite struct HomeopathyCaseTakingTests {
@@ -211,7 +211,7 @@ import Testing
 
     /// The order was chosen deliberately, so it's asserted rather than assumed.
     @Test func displayOrderIsTheRequestedOrder() {
-        #expect(ScenarioDomain.displayOrder == [.homeopathy, .medical, .networking, .social, .corporate])
+        #expect(ScenarioDomain.displayOrder == [.homeopathy, .medical, .networking, .social, .workplace])
     }
 
     @Test func everyDomainHasAReadableLabel() {
@@ -219,7 +219,7 @@ import Testing
         #expect(ScenarioDomain.medical.label == "Medical")
         #expect(ScenarioDomain.networking.label == "Networking")
         #expect(ScenarioDomain.social.label == "Social")
-        #expect(ScenarioDomain.corporate.label == "Corporate")
+        #expect(ScenarioDomain.workplace.label == "Workplace")
     }
 
     /// `work` is gone; nothing should still be decoding into it.
