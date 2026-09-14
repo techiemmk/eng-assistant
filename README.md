@@ -2,7 +2,13 @@
 
 A native macOS app for practicing **advanced English conversation** with a local AI roleplay partner. Built for the author's personal use; ships fully local — your audio and conversation history never leave your Mac.
 
-**Status:** v1 shipped. SwiftUI app with seven screens, real Ollama-backed conversations, whisper.cpp speech-to-text, post-session debrief with metrics + weak-spot extraction, on-disk audio persistence.
+**Status:** v1 shipped, in daily use. SwiftUI app — launch, onboarding, practice,
+live session, debrief, sessions history and settings — with real Ollama-backed
+conversations, whisper.cpp speech-to-text, cached post-session debriefs carrying
+metrics and weak-spot extraction, and on-disk audio you can play back.
+
+**Platform:** macOS 14+ only, and not portable without a rewrite — see
+[INSTALLATION.md](INSTALLATION.md).
 
 ---
 
@@ -48,7 +54,10 @@ Two modes:
 
 ## Quick start
 
-See **[INSTALLATION.md](INSTALLATION.md)** for full setup. Short version:
+**macOS only.** Full step-by-step setup, written for non-technical readers, is
+in **[INSTALLATION-macos.md](INSTALLATION-macos.md)**;
+[INSTALLATION.md](INSTALLATION.md) is the per-OS index. Short version for the
+impatient:
 
 ```bash
 brew install ollama
@@ -73,12 +82,18 @@ First launch: right-click the app in Finder → Open (Gatekeeper bypass for unsi
 .
 ├── README.md                       this file
 ├── DEVELOPER.md                    how to build, test, extend
-├── INSTALLATION.md                 step-by-step user setup
+├── INSTALLATION.md                 which guide to read for your OS
 ├── Package.swift                   SPM workspace
+├── INSTALLATION-macos.md           the actual install guide
+├── INSTALLATION-windows.md         why it can't run there
+├── INSTALLATION-linux.md           why it can't run there
 ├── bin/
 │   └── test.sh                     test runner (wraps `swift test` for CLT-only)
 ├── scripts/
-│   └── build-app.sh                wraps the binary into EngAssistant.app
+│   ├── build-app.sh                wraps the binary into EngAssistant.app
+│   └── make-app-icon.swift         draws Resources/AppIcon.icns
+├── Resources/
+│   └── AppIcon.icns                generated, committed
 ├── Sources/
 │   ├── Core/                       domain types, protocols, scenario catalog
 │   ├── Persistence/                GRDB-backed SQLite repositories
