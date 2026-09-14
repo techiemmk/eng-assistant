@@ -15,6 +15,11 @@ import Core
         func find(id: UUID) throws -> Session? { sessions.first { $0.id == id } }
         func finalize(id: UUID, endedAt: Date, summary: String?) throws {}
         func reactivate(id: UUID) throws {}
+        func abandon(id: UUID) throws {
+            guard let i = sessions.firstIndex(where: { $0.id == id }) else { return }
+            sessions[i].status = .abandoned
+            sessions[i].endedAt = Date()
+        }
         func delete(id: UUID) throws {
             if let deleteError { throw deleteError }
             deleted.append(id)

@@ -13,7 +13,16 @@ public final class SettingsViewModel: ObservableObject {
     @Published public private(set) var savedNotice: String? = nil
     @Published public private(set) var lastError: String? = nil
 
+    /// Models Ollama can actually run, so the model can be picked rather than
+    /// typed. A free-text field made "model not found" a permanent hazard: a
+    /// typo, or a model pulled under a slightly different tag, and every
+    /// session failed on its first turn.
+    @Published public private(set) var availableModels: [String] = []
+    @Published public private(set) var isLoadingModels: Bool = false
+
     private let persister: SettingsPersisting
+    private let healthCheck: HealthCheck
+    private let ollamaBaseURL: URL
     /// The live settings the rest of the app reads. Kept in sync on save so a
     /// changed model name takes effect without a relaunch.
     private let store: AppSettingsStore?
@@ -22,11 +31,32 @@ public final class SettingsViewModel: ObservableObject {
     public init(
         persister: SettingsPersisting,
         store: AppSettingsStore? = nil,
-        locator: STTLocator = STTLocator()
+        locator: STTLocator = STTLocator(),
+        healthCheck: HealthCheck = HealthCheck(),
+        ollamaBaseURL: URL = URL(string: "http://localhost:11434")!
     ) {
         self.persister = persister
         self.store = store
         self.locator = locator
+        self.healthCheck = healthCheck
+        self.ollamaBaseURL = ollamaBaseURL
+    }
+
+    /// The list to offer in the picker. The saved model is always included even
+    /// when Ollama doesn't report it — otherwise opening Settings while Ollama
+    /// is down would silently reassign the model to whatever is first.
+    public var selectableModels: [String] {
+        availableModels.contains(modelName) || modelName.isEmpty
+            ? availableModels
+            : availableModels + [modelName]
+    }
+
+    /// Asks Ollama what it has. Leaves `availableModels` empty when it can't
+    /// be reached, which the screen falls back to a text field for.
+    public func refreshAvailableModels() async {
+        isLoadingModels = true
+        defer { isLoadingModels = false }
+        availableModels = await healthCheck.localModels(baseURL: ollamaBaseURL) ?? []
     }
 
     /// True when neither STT path is filled in — the screen shows a hint and an
@@ -60,6 +90,7 @@ public final class SettingsViewModel: ObservableObject {
             lastError = "Load failed: \(error)"
             throw error
         }
+        await refreshAvailableModels()
     }
 
     public func save() async throws {

@@ -300,13 +300,32 @@ first launch running migrations doesn't pay the hold on top of its own work. A
 bootstrap *failure* skips the hold entirely — no reason to make someone wait to
 read an error. The hold is injectable so tests don't sit through it.
 
+**The debrief is cached, and that is a correctness requirement, not an
+optimisation.** `SessionAnalyzer.analyze` merges weak spots as a side effect,
+and merging *increments* the occurrence count of every pattern it recognises.
+`DebriefView` calls `analyze` from `.task`, i.e. every time the screen appears,
+so before the cache existed, reopening an old debrief inflated those counts —
+and coach mode targets the most frequent patterns, so browsing history silently
+changed what the app coached. `DebriefRepository` (migration `v2_debriefs`)
+stores the encoded `Debrief` per session; `analyze` returns the cached copy
+when present and only saves after everything succeeded, so a failed analysis is
+retried rather than cached as a half-result.
+`DebriefIdempotenceTests` pins this — including a test that asserts the *old*
+inflating behaviour still occurs with no cache attached, so the fix can't be
+mistaken for an accident of some other change.
+
+**A cached debrief is a snapshot, so live status has to be re-read.**
+`DebriefViewModel.hydrateResolvedState` looks each weak spot up by pattern on
+load: without it a spot resolved after the session was analysed would come back
+from the cache looking active.
+
 **Deleting a session** removes audio first, then the database rows. That order
 matters: if the audio delete fails the row survives, so the clips are still
 reachable to retry, whereas the reverse would orphan files with nothing pointing
 at them. `SessionRepository.delete` removes turns explicitly rather than relying
 on the schema's `ON DELETE CASCADE`, which only fires when SQLite's
 `foreign_keys` pragma is on — one transaction is cheaper than depending on a
-connection setting.
+connection setting. The cached debrief is deleted in that same transaction.
 
 **Coach mode's feedback path.** `PersonaBuilder` asks for
 `[[coach:<category>: try 'X' instead of 'Y']]` (or `drop 'Y'` for deletions) and
@@ -338,7 +357,16 @@ the first turn.
 - **Medical scenarios sit in the `work` domain**, surfaced by the `medical` tag
   rather than a domain of their own — deliberate, but if the clinical track
   grows much further it probably wants its own `ScenarioDomain` case.
-- **Weak Spots Notebook** with mark-as-resolved UI — deferred. `WeakSpotRepository.markResolved` exists and is unused by any screen, so a weak spot can only stop being targeted by the merger aging it out.
+- **No Weak Spots Notebook** — a weak spot can be resolved from the debrief it
+  appeared in, but there's no browseable list of all of them, so retiring an old
+  pattern means finding the session it came from.
+- **`metrics_daily` is still never written.** `MetricsRepository.upsert` has no
+  call site, so there is no progress-over-time data and no dashboard to show it.
+- **`ScenarioRepository` is unused** — the catalog loads from bundled JSON, so
+  the `scenarios` table stays empty and `ScenarioSource.custom` is unreachable
+  (no custom-scenario authoring).
+- **`PiperTTS` is never constructed**, and `vadSensitivity` / `sttModelName` /
+  `ttsVoiceName` are declared setting keys that nothing reads or writes.
 - **Audio replay buttons** in Debrief — deferred.
 - **Custom Scenario authoring UI** — deferred.
 - **Session resume** after a crash — the data layer supports it (`SessionPersisting.listActive`), but the UI doesn't expose it yet.

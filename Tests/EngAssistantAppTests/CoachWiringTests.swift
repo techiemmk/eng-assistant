@@ -52,6 +52,12 @@ import Fakes
             s.endedAt = nil
             sessions[id] = s
         }
+        func abandon(id: UUID) throws {
+            guard var s = sessions[id] else { return }
+            s.status = .abandoned
+            s.endedAt = Date()
+            sessions[id] = s
+        }
         func delete(id: UUID) throws { sessions[id] = nil }
         func listActive() throws -> [Session] { sessions.values.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] {

@@ -15,11 +15,29 @@ enum AppPane: Hashable {
 public struct ContentView: View {
     let container: AppContainer
     @ObservedObject var settings: AppSettingsStore
+    /// A session left unfinished by a crash or a quit mid-conversation, offered
+    /// once at launch. Passed as a plain value rather than by observing
+    /// `AppState`: this view is rebuilt by the `App` body whenever that state
+    /// changes, so the value is always current and the view stays ignorant of
+    /// the app's root state object.
+    let unfinishedSession: Session?
+    /// Returns the session to resume and clears the offer.
+    let takeUnfinishedSession: () -> Session?
+    let discardUnfinishedSession: () -> Void
     @State private var selection: AppPane = .practice
 
-    public init(container: AppContainer, settings: AppSettingsStore) {
+    public init(
+        container: AppContainer,
+        settings: AppSettingsStore,
+        unfinishedSession: Session? = nil,
+        takeUnfinishedSession: @escaping () -> Session? = { nil },
+        discardUnfinishedSession: @escaping () -> Void = {}
+    ) {
         self.container = container
         self.settings = settings
+        self.unfinishedSession = unfinishedSession
+        self.takeUnfinishedSession = takeUnfinishedSession
+        self.discardUnfinishedSession = discardUnfinishedSession
     }
 
     public var body: some View {
@@ -92,9 +110,16 @@ public struct ContentView: View {
                     weakSpotMerger: WeakSpotMerger(persister: container.weakSpotRepository),
                     sessionPersister: container.sessionRepository,
                     turnPersister: container.turnRepository,
-                    scenarioCatalog: container.scenarioCatalog
+                    scenarioCatalog: container.scenarioCatalog,
+                    debriefPersister: container.debriefRepository
                 )
-                DebriefView(viewModel: DebriefViewModel(analyzer: analyzer, sessionId: sessionId))
+                DebriefView(viewModel: DebriefViewModel(
+                    analyzer: analyzer,
+                    sessionId: sessionId,
+                    weakSpotPersister: container.weakSpotRepository,
+                    audioPlayback: container.makeAudioPlayback(),
+                    audioRoot: container.storageLayout.rootDirectory
+                ))
             case .history:
                 SessionsHistoryView(
                     viewModel: SessionsHistoryViewModel(
@@ -116,5 +141,34 @@ public struct ContentView: View {
             }
         }
         .navigationTitle(Theme.appName)
+        .alert(
+            "Pick up where you left off?",
+            isPresented: Binding(
+                get: { unfinishedSession != nil },
+                set: { if !$0 { discardUnfinishedSession() } }
+            ),
+            presenting: unfinishedSession
+        ) { session in
+            Button("Continue") {
+                guard let resuming = takeUnfinishedSession() else { return }
+                selection = .session(
+                    scenarioId: resuming.scenarioId,
+                    mode: resuming.mode,
+                    resuming: resuming.id
+                )
+            }
+            Button("Discard", role: .destructive) {
+                discardUnfinishedSession()
+            }
+        } message: { session in
+            Text("\(scenarioTitle(for: session)) from "
+                 + session.startedAt.formatted(date: .abbreviated, time: .shortened)
+                 + " was never finished. Continuing keeps the conversation so far; "
+                 + "discarding leaves it in your history as abandoned.")
+        }
+    }
+
+    private func scenarioTitle(for session: Session) -> String {
+        container.scenarioCatalog.scenario(id: session.scenarioId)?.title ?? session.scenarioId
     }
 }

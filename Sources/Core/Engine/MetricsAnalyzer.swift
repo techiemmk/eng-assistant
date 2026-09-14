@@ -3,7 +3,7 @@ import Foundation
 /// Aggregated per-session metrics. Not persisted as a row of its own — the
 /// per-turn `metrics_json` is the source of truth; this is computed for the
 /// current debrief and (later) feeds `metrics_daily` rollups.
-public struct SessionMetrics: Equatable, Sendable {
+public struct SessionMetrics: Codable, Equatable, Sendable {
     public let userTurnCount: Int
     public let totalWordCount: Int
     public let totalFillerCount: Int

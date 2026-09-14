@@ -45,11 +45,47 @@ public struct SettingsView: View {
                 Section {
                     HStack {
                         Image(systemName: "cpu.fill").foregroundStyle(Theme.brand).frame(width: 20)
-                        TextField("Ollama model name", text: $viewModel.modelName)
+                        if viewModel.selectableModels.isEmpty {
+                            // Ollama unreachable — fall back to typing, so the
+                            // model can still be set with the server stopped.
+                            TextField("Ollama model name", text: $viewModel.modelName)
+                        } else {
+                            Picker("Model", selection: $viewModel.modelName) {
+                                ForEach(viewModel.selectableModels, id: \.self) { name in
+                                    Text(name).tag(name)
+                                }
+                            }
+                        }
+                    }
+                    HStack {
+                        Button {
+                            Task { await viewModel.refreshAvailableModels() }
+                        } label: {
+                            Label("Refresh list", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(viewModel.isLoadingModels)
+                        Spacer()
+                        if viewModel.isLoadingModels {
+                            ActivityLabel(text: "Asking Ollama", systemImage: "server.rack",
+                                          font: Theme.caption)
+                        } else if viewModel.availableModels.isEmpty {
+                            Label("Ollama unreachable — type the name", systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(Theme.warning)
+                                .font(Theme.caption)
+                        } else {
+                            Label("\(viewModel.availableModels.count) installed", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(Theme.success)
+                                .font(Theme.caption)
+                        }
                     }
                 } header: {
                     Label("AI Model", systemImage: "brain.head.profile")
                         .font(Theme.cardTitle)
+                } footer: {
+                    Text("Only models installed locally are listed — cloud models need an Ollama subscription and can't be used here.")
+                        .font(Theme.caption)
+                        .foregroundStyle(Theme.textSecondary)
                 }
 
                 Section {

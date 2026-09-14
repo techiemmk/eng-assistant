@@ -64,8 +64,17 @@ public final class SessionRepository: SessionPersisting {
     /// Turns are deleted explicitly rather than left to the schema's ON DELETE
     /// CASCADE: that only fires when SQLite's foreign_keys pragma is on, and
     /// one transaction here is cheaper than depending on a connection setting.
+    public func abandon(id: UUID) throws {
+        try database.queue.write { db in
+            try db.execute(sql: """
+                UPDATE sessions SET status = 'abandoned', ended_at = ? WHERE id = ?
+                """, arguments: [Date(), id.uuidString])
+        }
+    }
+
     public func delete(id: UUID) throws {
         try database.queue.write { db in
+            try db.execute(sql: "DELETE FROM debriefs WHERE session_id = ?", arguments: [id.uuidString])
             try db.execute(sql: "DELETE FROM turns WHERE session_id = ?", arguments: [id.uuidString])
             try db.execute(sql: "DELETE FROM sessions WHERE id = ?", arguments: [id.uuidString])
         }

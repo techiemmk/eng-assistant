@@ -108,10 +108,13 @@ public struct DebriefView: View {
                     HStack(alignment: .top, spacing: 10) {
                         Text(turn.speaker == .user ? "You" : "AI")
                             .font(Theme.captionBold)
-                            .foregroundStyle(turn.speaker == .user ? Theme.brand : .secondary)
+                            .foregroundStyle(turn.speaker == .user ? Theme.brand : Theme.textSecondary)
                             .frame(width: 46, alignment: .leading)
                         Text(turn.text)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                        if viewModel.hasAudio(turn) {
+                            playButton(for: turn)
+                        }
                     }
                     .padding(10)
                     .background(turn.speaker == .user ? Theme.brand.opacity(0.06) : Theme.cardSurface)
@@ -119,6 +122,25 @@ public struct DebriefView: View {
                 }
             }
         }
+    }
+
+    /// Recordings have been written to disk since the first version but were
+    /// never playable; hearing your own answer back is most of their value.
+    private func playButton(for turn: Turn) -> some View {
+        let isPlaying = viewModel.playingTurnId == turn.id
+        return Button {
+            Task { await viewModel.play(turn) }
+        } label: {
+            Image(systemName: isPlaying ? "speaker.wave.2.fill" : "play.circle")
+                .font(Theme.rowIcon)
+                .foregroundStyle(isPlaying ? Theme.success : Theme.brand)
+        }
+        .buttonStyle(.plain)
+        // One clip at a time: the view model refuses overlapping playback, so
+        // the other buttons would otherwise look live but do nothing.
+        .disabled(viewModel.playingTurnId != nil && !isPlaying)
+        .help(isPlaying ? "Playing" : "Play this turn back")
+        .accessibilityLabel(isPlaying ? "Playing this turn" : "Play this turn back")
     }
 
     private func sectionHeader(_ title: String, icon: String, tint: Color = .primary) -> some View {
@@ -147,27 +169,39 @@ public struct DebriefView: View {
     }
 
     private func weakSpotRow(_ ws: WeakSpot, leadingIcon: String, trailing: String? = nil) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: leadingIcon)
+        let resolved = viewModel.isResolved(ws)
+        return HStack(spacing: 10) {
+            Image(systemName: resolved ? "checkmark.circle.fill" : leadingIcon)
                 .font(Theme.caption)
-                .foregroundStyle(Theme.brand)
+                .foregroundStyle(resolved ? Theme.success : Theme.brand)
                 .frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
                 Text(ws.pattern)
-                Text(ws.category.rawValue)
+                    .strikethrough(resolved, color: Theme.textSecondary)
+                Text(resolved ? "\(ws.category.rawValue) · resolved" : ws.category.rawValue)
                     .font(Theme.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
-            if let t = trailing {
+            if let t = trailing, !resolved {
                 Text(t)
                     .font(Theme.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
+            if !resolved {
+                Button("Resolve") {
+                    viewModel.resolve(ws)
+                }
+                .buttonStyle(.bordered)
+                .font(Theme.chip)
+                .help("Stop coach mode targeting this pattern")
+            }
         }
+        .opacity(resolved ? 0.65 : 1)
         .padding(12)
         .background(Theme.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.separator, lineWidth: 1))
+        .animation(.easeInOut(duration: 0.15), value: resolved)
     }
 }

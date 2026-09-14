@@ -15,6 +15,11 @@ import Core
         func findByPattern(_ pattern: String) throws -> WeakSpot? {
             store.values.first { $0.pattern == pattern }
         }
+        var resolved: [UUID] = []
+        func markResolved(id: UUID) throws {
+            resolved.append(id)
+            store[id]?.status = .resolved
+        }
         func incrementOccurrence(id: UUID, lastSeen: Date, addExampleTurnId: UUID?) throws {
             guard var ws = store[id] else { return }
             ws.occurrenceCount += 1

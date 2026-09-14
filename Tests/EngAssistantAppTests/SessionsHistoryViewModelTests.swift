@@ -15,6 +15,11 @@ import Core
             sessions[i].status = .active
             sessions[i].endedAt = nil
         }
+        func abandon(id: UUID) throws {
+            guard let i = sessions.firstIndex(where: { $0.id == id }) else { return }
+            sessions[i].status = .abandoned
+            sessions[i].endedAt = Date()
+        }
         func delete(id: UUID) throws { sessions.removeAll { $0.id == id } }
         func listActive() throws -> [Session] { sessions.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] {

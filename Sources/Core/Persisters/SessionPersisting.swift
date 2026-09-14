@@ -7,6 +7,10 @@ public protocol SessionPersisting: Sendable {
     /// Puts a finished session back into `.active` and clears its end time, so
     /// a conversation can be picked up where it left off.
     func reactivate(id: UUID) throws
+    /// Marks a session the user chose not to continue as `.abandoned`. Used for
+    /// sessions left `.active` by a crash or a quit mid-conversation, which
+    /// would otherwise be offered for resume on every launch forever.
+    func abandon(id: UUID) throws
     /// Removes the session and its turns. Audio files are the caller's job —
     /// they live on disk, not in the database.
     func delete(id: UUID) throws

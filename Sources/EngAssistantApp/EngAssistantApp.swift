@@ -21,7 +21,13 @@ struct EngAssistantApp: App {
                         appState.markOnboardingComplete()
                     }
                 } else if let container = appState.container, let settings = appState.settings {
-                    ContentView(container: container, settings: settings)
+                    ContentView(
+                        container: container,
+                        settings: settings,
+                        unfinishedSession: appState.unfinishedSession,
+                        takeUnfinishedSession: { appState.takeUnfinishedSession() },
+                        discardUnfinishedSession: { appState.discardUnfinishedSession() }
+                    )
                 } else {
                     LaunchView()
                 }
@@ -73,6 +79,10 @@ final class AppState: ObservableObject {
     nonisolated static let defaultLaunchHold: Duration = .seconds(3)
 
     @Published var isLaunching: Bool = true
+    /// A session still marked `.active` at launch: the app quit or crashed
+    /// mid-conversation. `listActive()` has existed since the first version but
+    /// nothing ever called it, so these accumulated invisibly.
+    @Published var unfinishedSession: Session?
     @Published var didCompleteOnboarding: Bool = false
     @Published var container: AppContainer?
     @Published var settings: AppSettingsStore?
@@ -114,6 +124,11 @@ final class AppState: ObservableObject {
             // Re-run setup checks now that the real model name is known.
             Task { await self.onboardingVM.runChecks() }
 
+            // Most recent first, so a pile of old orphans offers the one the
+            // user is most likely to actually want back.
+            unfinishedSession = (try? c.sessionRepository.listActive())?
+                .max { $0.startedAt < $1.startedAt }
+
             let days = store.audioRetentionDays
             Task.detached {
                 let sweeper = AudioRetentionSweeper(layout: c.storageLayout, retentionDays: days)
@@ -136,6 +151,21 @@ final class AppState: ObservableObject {
         let elapsed = ContinuousClock.now - started
         guard elapsed < launchHold else { return }
         try? await Task.sleep(for: launchHold - elapsed)
+    }
+
+    /// The user chose to continue the unfinished session; clear the offer so it
+    /// isn't made twice in one launch.
+    func takeUnfinishedSession() -> Session? {
+        defer { unfinishedSession = nil }
+        return unfinishedSession
+    }
+
+    /// The user declined. Marking it abandoned is what stops the same session
+    /// being offered on every future launch.
+    func discardUnfinishedSession() {
+        guard let session = unfinishedSession, let container else { return }
+        try? container.sessionRepository.abandon(id: session.id)
+        unfinishedSession = nil
     }
 
     func markOnboardingComplete() {

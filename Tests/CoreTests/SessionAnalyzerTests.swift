@@ -22,6 +22,12 @@ import Fakes
             s.endedAt = nil
             sessions[id] = s
         }
+        func abandon(id: UUID) throws {
+            guard var s = sessions[id] else { return }
+            s.status = .abandoned
+            s.endedAt = Date()
+            sessions[id] = s
+        }
         func delete(id: UUID) throws { sessions[id] = nil }
         func listActive() throws -> [Session] { Array(sessions.values) }
         func listRecent(limit: Int) throws -> [Session] {
@@ -48,6 +54,11 @@ import Fakes
         func create(_ ws: WeakSpot) throws { store[ws.id] = ws }
         func findByPattern(_ pattern: String) throws -> WeakSpot? {
             store.values.first { $0.pattern == pattern }
+        }
+        var resolved: [UUID] = []
+        func markResolved(id: UUID) throws {
+            resolved.append(id)
+            store[id]?.status = .resolved
         }
         func incrementOccurrence(id: UUID, lastSeen: Date, addExampleTurnId: UUID?) throws {
             guard var ws = store[id] else { return }

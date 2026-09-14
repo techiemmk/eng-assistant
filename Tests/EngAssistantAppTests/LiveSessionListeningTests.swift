@@ -44,6 +44,12 @@ import Fakes
             s.endedAt = nil
             sessions[id] = s
         }
+        func abandon(id: UUID) throws {
+            guard var s = sessions[id] else { return }
+            s.status = .abandoned
+            s.endedAt = Date()
+            sessions[id] = s
+        }
         func delete(id: UUID) throws { sessions[id] = nil }
         func listActive() throws -> [Session] { sessions.values.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] {
@@ -113,13 +119,18 @@ import Fakes
         try await vm.start()
         await vm.startListening()
 
+        // Wait on the outcome, not on `isListening`. That flag clears at the
+        // *start* of stopListening(), before the turn has been transcribed,
+        // answered and persisted — waiting on it raced the turn and made this
+        // test intermittently see a transcript of 1.
         var waited = 0
-        while vm.isListening && waited < 200 {
+        while vm.transcript.count < 3 && waited < 300 {
             try await Task.sleep(for: .milliseconds(10))
             waited += 1
         }
         #expect(vm.isListening == false)
-        #expect(vm.transcript.count == 3)
+        #expect(vm.transcript.count == 3, "gave up after \(waited * 10)ms")
+        #expect(vm.isProcessing == false)
     }
 
     @Test func listeningIsIgnoredBeforeTheSessionStarts() async {

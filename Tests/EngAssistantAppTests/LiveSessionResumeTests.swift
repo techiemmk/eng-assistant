@@ -29,6 +29,12 @@ import Fakes
             s.endedAt = nil
             sessions[id] = s
         }
+        func abandon(id: UUID) throws {
+            guard var s = sessions[id] else { return }
+            s.status = .abandoned
+            s.endedAt = Date()
+            sessions[id] = s
+        }
         func delete(id: UUID) throws { sessions[id] = nil }
         func listActive() throws -> [Session] { sessions.values.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] {
@@ -158,6 +164,11 @@ import Fakes
         func find(id: UUID) throws -> Session? { sessions.first { $0.id == id } }
         func finalize(id: UUID, endedAt: Date, summary: String?) throws {}
         func reactivate(id: UUID) throws {}
+        func abandon(id: UUID) throws {
+            guard let i = sessions.firstIndex(where: { $0.id == id }) else { return }
+            sessions[i].status = .abandoned
+            sessions[i].endedAt = Date()
+        }
         func delete(id: UUID) throws { sessions.removeAll { $0.id == id } }
         func listActive() throws -> [Session] { sessions.filter { $0.status == .active } }
         func listRecent(limit: Int) throws -> [Session] { Array(sessions.prefix(limit)) }

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Debrief: Equatable, Sendable {
+public struct Debrief: Codable, Equatable, Sendable {
     public let session: Session
     public let scenario: Scenario
     public let summary: String

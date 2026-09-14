@@ -75,6 +75,18 @@ public enum Migrations {
             }
         }
 
+        // A debrief is expensive to produce (one LLM call per user turn, plus
+        // weak-spot extraction) and merging weak spots mutates state, so it is
+        // computed once and cached here rather than recomputed on each visit.
+        migrator.registerMigration("v2_debriefs") { db in
+            try db.create(table: "debriefs") { t in
+                t.column("session_id", .text).primaryKey()
+                    .references("sessions", onDelete: .cascade)
+                t.column("json", .text).notNull()
+                t.column("created_at", .datetime).notNull()
+            }
+        }
+
         return migrator
     }
 }

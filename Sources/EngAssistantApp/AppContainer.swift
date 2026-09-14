@@ -17,6 +17,7 @@ public final class AppContainer: @unchecked Sendable {
     public let weakSpotRepository: WeakSpotRepository
     public let metricsRepository: MetricsRepository
     public let settingsRepository: SettingsRepository
+    public let debriefRepository: DebriefRepository
     public let audioFileStore: AudioFileStore
 
     public init(storageLayout: StorageLayout = StorageLayout()) throws {
@@ -30,6 +31,7 @@ public final class AppContainer: @unchecked Sendable {
         self.weakSpotRepository = WeakSpotRepository(database: database)
         self.metricsRepository = MetricsRepository(database: database)
         self.settingsRepository = SettingsRepository(database: database)
+        self.debriefRepository = DebriefRepository(database: database)
         self.audioFileStore = AudioFileStore(layout: storageLayout)
     }
 

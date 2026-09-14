@@ -156,7 +156,11 @@ You're at the Practice screen.
 3. Click **Start Session**
 4. The AI plays its opening line through your speakers. Click **Push to talk** (or press Space) and speak. The mic stays open — click **Stop & send** when you're done, or just pause for about a second and a half and the app sends the turn itself.
 5. Click **End Session** when you're done
-6. The Debrief screen runs analysis: per-turn metrics, new vs recurring weak spots, suggested drills
+6. The Debrief screen runs analysis: per-turn metrics, new vs recurring weak
+   spots, suggested drills. Hit **Resolve** on a weak spot once you've fixed it
+   and coach mode stops targeting it; press play on any turn to hear the
+   recording back. The analysis is cached, so reopening the debrief later is
+   instant
 
 The **Sessions** sidebar shows all your past sessions. Click a row to revisit its
 debrief, hit **Continue** to pick that conversation back up — the AI keeps the
@@ -165,7 +169,11 @@ button to delete it. Deleting asks first, then removes the session, its
 transcript and its recordings; it can't be undone.
 
 The **Settings** sidebar lets you change the theme (light or dark), the LLM
-model, speech-to-text paths, default mode, and audio retention.
+model (picked from the models Ollama actually has installed, so it can't be
+mistyped), speech-to-text paths, default mode, and audio retention.
+
+If the app ever quits in the middle of a conversation, the next launch asks
+whether to continue that session or discard it.
 
 ---
 
@@ -193,8 +201,7 @@ These are tracked for a later polish release:
 
 - **Speech-to-text needs a manual install.** whisper.cpp and its model aren't bundled — see Step 4. Without them the Live Session screen says so instead of inventing a transcript.
 - **No Progress Dashboard** with metric trend charts.
-- **Weak Spots Notebook** UI is minimal — patterns appear in the debrief but there's no separate browseable notebook with mark-as-resolved.
-- **No audio replay buttons** in the debrief — the .wav files are saved, but the UI doesn't yet play them back.
+- **No Weak Spots Notebook** — patterns appear in the debrief (where they can be resolved), but there's no separate browseable list of them.
 - **No custom-scenario authoring** — only the bundled six scenarios so far.
 
 ---

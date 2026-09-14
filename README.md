@@ -28,6 +28,14 @@ chips on the Practice screen:
 - **Workplace** (2) — the daily engineering standup and a skip-level 1:1 with a
   VP.
 
+The debrief is computed once and cached, so revisiting an old session is
+instant and doesn't re-run the model. Each weak spot there has a **Resolve**
+button — retiring one stops coach mode targeting it — and every turn with a
+recording has a play button, so you can hear your own answers back.
+
+If the app quits mid-conversation, the next launch offers that session back
+rather than leaving it stranded.
+
 You can also **continue** a past conversation instead of starting over: the
 Sessions list has a Continue button on every row, which reopens that session and
 replays its turns back into the model's context, so the persona picks up where
