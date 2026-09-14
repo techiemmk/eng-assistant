@@ -90,6 +90,58 @@ public struct SettingsView: View {
 
                 Section {
                     HStack {
+                        Image(systemName: "waveform").foregroundStyle(Theme.brand).frame(width: 20)
+                        Picker("Voice", selection: $viewModel.ttsVoiceId) {
+                            Text("System default").tag("")
+                            ForEach(viewModel.selectableVoices) { voice in
+                                Text(voice.pickerLabel).tag(voice.id)
+                            }
+                        }
+                    }
+                    HStack {
+                        Button {
+                            Task { await viewModel.previewVoice() }
+                        } label: {
+                            Label("Hear it", systemImage: "play.circle")
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(viewModel.isPreviewingVoice)
+                        Spacer()
+                        if viewModel.isPreviewingVoice {
+                            ActivityLabel(text: "Speaking", systemImage: "speaker.wave.2.fill",
+                                          font: Theme.caption)
+                        } else {
+                            Text("\(viewModel.availableVoices.count) voices installed")
+                                .font(Theme.caption)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                    }
+                    if viewModel.shouldSuggestBetterVoices {
+                        // The honest headline: no amount of tuning in this app
+                        // beats downloading one of Apple's better voices.
+                        Label(
+                            "All your installed voices are Apple's basic tier, which is why they sound robotic. "
+                            + "For a much more natural voice, open System Settings → Accessibility → "
+                            + "Spoken Content → System Voice → Manage Voices and download an English voice "
+                            + "marked Premium (or Enhanced). Then come back and click Refresh.",
+                            systemImage: "lightbulb.fill"
+                        )
+                        .font(Theme.caption)
+                        .foregroundStyle(Theme.warning)
+                    }
+                    Button {
+                        viewModel.refreshAvailableVoices()
+                    } label: {
+                        Label("Refresh voice list", systemImage: "arrow.clockwise")
+                    }
+                    .buttonStyle(.bordered)
+                } header: {
+                    Label("AI Voice", systemImage: "person.wave.2.fill")
+                        .font(Theme.cardTitle)
+                }
+
+                Section {
+                    HStack {
                         Image(systemName: "terminal.fill").foregroundStyle(Theme.brand).frame(width: 20)
                         TextField("Path to whisper-cli", text: $viewModel.sttExecutablePath)
                     }

@@ -283,6 +283,33 @@ are kept.
 
 ---
 
+## Making the AI sound more human (worth 2 minutes)
+
+Out of the box the AI's voice sounds robotic. That is not the app — it's that
+macOS ships only its most basic voices, and the good ones are a free optional
+download most people never notice.
+
+1. Open  → **System Settings**.
+2. Go to **Accessibility** → **Spoken Content**.
+3. Next to **System voice**, click the options button and choose
+   **Manage Voices…** (the exact wording shifts slightly between macOS
+   versions — look for a way to add or manage voices).
+4. Open the **English** section. Voices are marked by quality; pick one labelled
+   **Premium** if you see it, otherwise **Enhanced**. Click the download arrow.
+   Each is a few hundred MB.
+5. Back in Jul EngAssistant, go to **Settings → AI Voice**, click
+   **Refresh voice list**, and choose the voice you just downloaded.
+6. Click **Hear it** to listen to it before you start a conversation.
+
+The difference is large — Premium voices are the natural-sounding ones. Until
+you download one, the app's Settings screen will point this out.
+
+You can also just pick a different Standard voice if you prefer a particular
+accent; **Daniel** is British, **Karen** Australian, **Moira** Irish, **Rishi**
+Indian.
+
+---
+
 ## Where your files are kept
 
 Everything lives in one folder:

@@ -14,9 +14,56 @@ import Core
 public final class AVSpeechTTS: TTSProvider, @unchecked Sendable {
     /// Maximum wall time per `synthesize` call before returning what's collected.
     private let timeout: TimeInterval
+    private let delivery: Delivery
 
-    public init(timeout: TimeInterval = 30) {
+    /// How the utterance is spoken, as distinct from *which* voice speaks it.
+    ///
+    /// Only the two knobs here actually reach the audio. The app synthesises to
+    /// a buffer with `write(_:bufferCallback:)` and plays that buffer back
+    /// later, so `preUtteranceDelay` and `postUtteranceDelay` — which schedule
+    /// silence around *live* speech — are measurably absent from what gets
+    /// written, and are deliberately not exposed. Measured: a 1.0s
+    /// `postUtteranceDelay` produced a byte-identical buffer.
+    ///
+    /// This tuning does *not* substitute for a better voice. On a Mac with only
+    /// Apple's stock voices installed it is polish on a fundamentally robotic
+    /// timbre — see `SystemVoiceCatalog.hasOnlyStandardVoices`.
+    public struct Delivery: Sendable {
+        /// `AVSpeechUtterance.rate`. **Bucketed, not continuous:** measured on
+        /// macOS 26, 0.46 and 0.47 produce output byte-identical to the 0.5
+        /// default, while 0.45 and below cross into the next bucket and slow
+        /// speech by about 10%. So the default below is 0.9× rather than a
+        /// gentler-looking multiplier that would quietly do nothing.
+        public var rate: Float
+        /// `AVSpeechUtterance.pitchMultiplier`. Does change the written audio —
+        /// verified by comparing buffer contents, which a length comparison
+        /// cannot detect.
+        public var pitchMultiplier: Float
+
+        public init(
+            rate: Float = AVSpeechUtteranceDefaultSpeechRate * 0.9,
+            pitchMultiplier: Float = 1.0
+        ) {
+            self.rate = rate
+            self.pitchMultiplier = pitchMultiplier
+        }
+
+        /// AVFoundation's own defaults, for comparison in tests.
+        public static let avFoundationDefaults = Delivery(
+            rate: AVSpeechUtteranceDefaultSpeechRate,
+            pitchMultiplier: 1.0
+        )
+
+        /// The slowest setting that is still natural, for learners who need more
+        /// time to catch the words.
+        public static let deliberate = Delivery(
+            rate: AVSpeechUtteranceDefaultSpeechRate * 0.8
+        )
+    }
+
+    public init(timeout: TimeInterval = 30, delivery: Delivery = Delivery()) {
         self.timeout = timeout
+        self.delivery = delivery
     }
 
     public func synthesize(text: String, voice: Voice) async throws -> SynthesizedAudio {
@@ -24,9 +71,14 @@ public final class AVSpeechTTS: TTSProvider, @unchecked Sendable {
             return SynthesizedAudio(data: Data(), sampleRate: 0)
         }
         let utterance = AVSpeechUtterance(string: text)
+        // A voice id that isn't installed — a saved choice whose voice the user
+        // has since removed — leaves `voice` nil, which AVFoundation resolves to
+        // the system default. That's the right fallback, so it isn't an error.
         if let v = AVSpeechSynthesisVoice(identifier: voice.id) {
             utterance.voice = v
         }
+        utterance.rate = delivery.rate
+        utterance.pitchMultiplier = delivery.pitchMultiplier
         let collector = AVSpeechCollector()
         let synth = AVSpeechSynthesizer()
         synth.delegate = collector

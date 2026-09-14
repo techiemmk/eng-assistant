@@ -300,6 +300,38 @@ first launch running migrations doesn't pay the hold on top of its own work. A
 bootstrap *failure* skips the hold entirely — no reason to make someone wait to
 read an error. The hold is injectable so tests don't sit through it.
 
+**Voice selection, and what actually affects synthesised audio.** The engine
+takes a `Core.Voice`, and `AVSpeechTTS` has always honoured `voice.id` — but
+`LiveSessionViewModel` hardcoded `Voice(id: "default")`, which is not a real
+`AVSpeechSynthesisVoice` identifier, so AVFoundation silently fell back to the
+system voice on every session. Verified: that id produced byte-identical output
+to passing no voice at all. It now comes from `AppSettingsStore.ttsVoice`,
+persisted in the previously-unused `ttsVoiceName` key.
+
+`SystemVoiceCatalog` builds the picker list. It excludes the
+`com.apple.speech.synthesis.voice.*` family — Apple's legacy novelty voices
+(Zarvox, Boing, Bad News, Bells), 19 of the 41 English voices on a stock Mac —
+and sorts best-quality-first so the good voices don't need scrolling for.
+
+Two measured facts about `AVSpeechUtterance`, both easy to get wrong:
+
+- **`rate` is bucketed.** On macOS 26, 0.46 and 0.47 give output byte-identical
+  to the 0.5 default; 0.45 and below cross a bucket and slow speech ~10%. A
+  cautious-looking multiplier like 0.94 is a silent no-op, which is exactly the
+  bug `AVSpeechDeliveryTests.theDefaultRateIsLowEnoughToActuallyTakeEffect`
+  exists to catch.
+- **`preUtteranceDelay` / `postUtteranceDelay` do nothing here** and are
+  deliberately not exposed. They schedule silence around *live* speech; this app
+  synthesises to a buffer with `write(_:bufferCallback:)` and plays it back
+  separately, so a 1.0s post-delay produced a byte-identical buffer.
+- **`pitchMultiplier` does work**, but only a *content* comparison detects it —
+  it changes the samples without changing their count, so a length assertion
+  would wrongly call it a no-op.
+
+Tests that drive the real synthesiser must be gated behind `RUN_LIVE_TESTS=1`
+like `LiveProvidersTests`: run ungated in the test bundle they segfault the
+process. Run them with `RUN_LIVE_TESTS=1 ./bin/test.sh`.
+
 **The debrief is cached, and that is a correctness requirement, not an
 optimisation.** `SessionAnalyzer.analyze` merges weak spots as a side effect,
 and merging *increments* the occurrence count of every pattern it recognises.
@@ -365,8 +397,12 @@ the first turn.
 - **`ScenarioRepository` is unused** — the catalog loads from bundled JSON, so
   the `scenarios` table stays empty and `ScenarioSource.custom` is unreachable
   (no custom-scenario authoring).
-- **`PiperTTS` is never constructed**, and `vadSensitivity` / `sttModelName` /
-  `ttsVoiceName` are declared setting keys that nothing reads or writes.
+- **`PiperTTS` is never constructed.** It is the obvious route to a genuinely
+  neural voice, better than Apple's Premium tier, but needs piper installed plus
+  an `.onnx` voice model, and its argument list is unverified against the real
+  binary — `WhisperLocalSTT` had exactly that class of bug.
+- **`vadSensitivity` and `sttModelName`** are declared setting keys that nothing
+  reads or writes. (`ttsVoiceName` is now used by the voice picker.)
 - **Audio replay buttons** in Debrief — deferred.
 - **Custom Scenario authoring UI** — deferred.
 - **Session resume** after a crash — the data layer supports it (`SessionPersisting.listActive`), but the UI doesn't expose it yet.

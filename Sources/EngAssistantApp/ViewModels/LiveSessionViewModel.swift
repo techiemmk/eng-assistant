@@ -48,6 +48,9 @@ public final class LiveSessionViewModel: ObservableObject {
         turnPersister: TurnPersisting,
         audioFilePersister: AudioFilePersisting?,
         modelName: String = AppDefaults.llmModelName,
+        /// Which system voice the AI speaks in. The default was hardcoded to a
+        /// non-existent id, so every session silently used the system voice.
+        voice: Voice = Voice(id: "", displayName: "System default"),
         activeWeakSpots: [WeakSpot] = [],
         endpointPollInterval: Duration = .milliseconds(200)
     ) {
@@ -68,7 +71,7 @@ public final class LiveSessionViewModel: ObservableObject {
             audioPlayback: audioPlayback,
             sessionPersister: sessionPersister,
             turnPersister: turnPersister,
-            voice: Voice(id: "default", displayName: "Default"),
+            voice: voice,
             llmOptions: LLMOptions(modelName: modelName),
             audioFilePersister: audioFilePersister
         )

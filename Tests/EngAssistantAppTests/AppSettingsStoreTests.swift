@@ -93,7 +93,8 @@ import Core
             audioRetentionDays: 30,
             sttExecutablePath: "",
             sttModelPath: "",
-            appearance: .light
+            appearance: .light,
+            ttsVoiceId: ""
         )
         #expect(store.modelName == AppDefaults.llmModelName)
     }

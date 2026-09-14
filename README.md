@@ -109,6 +109,25 @@ First launch: right-click the app in Finder → Open (Gatekeeper bypass for unsi
         └── plans/                  6 implementation plans (v1 milestones)
 ```
 
+## The AI's voice
+
+Speech is Apple's `AVSpeechSynthesizer`, and **Settings → AI Voice** picks which
+installed voice speaks, with a *Hear it* button to compare before committing.
+Novelty voices (Zarvox, Boing, Bad News…) are filtered out; the rest are listed
+best-quality-first and labelled Standard / Enhanced / Premium.
+
+The honest caveat: a stock Mac ships only Apple's **Standard** tier, which is
+why the default sounds robotic, and no amount of code fixes that. The single
+biggest improvement available is free and takes two minutes — download an
+English **Premium** voice in System Settings → Accessibility → Spoken Content →
+System Voice → Manage Voices. The app detects when you have nothing better than
+Standard installed and says so in Settings.
+
+Delivery is also nudged slower than AVFoundation's default. Note that
+`AVSpeechUtterance.rate` is *bucketed*, not continuous — measured on macOS 26,
+0.46 and 0.47 produce byte-identical audio to the 0.5 default, so the multiplier
+has to be large enough to cross a bucket or it does nothing at all.
+
 ## Look and feel
 
 The app icon is a speech bubble holding a letter — spoken language, not

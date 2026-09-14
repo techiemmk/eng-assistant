@@ -85,6 +85,7 @@ public struct ContentView: View {
                         turnPersister: container.turnRepository,
                         audioFilePersister: container.audioFileStore,
                         modelName: settings.modelName,
+                        voice: settings.ttsVoice,
                         // Only coach mode acts on these; flow mode never
                         // mentions them, so don't pay for the read.
                         activeWeakSpots: mode == .coach ? container.activeWeakSpots() : []

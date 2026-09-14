@@ -17,6 +17,10 @@ public final class AppSettingsStore: ObservableObject {
 
     @Published public private(set) var appearance: AppearancePreference = AppDefaults.appearance
 
+    /// `AVSpeechSynthesisVoice` identifier for the AI's voice. Empty means "let
+    /// the system choose", which is what the app did before the picker existed.
+    @Published public private(set) var ttsVoiceId: String = ""
+
     private let persister: SettingsPersisting
     private let applyToHost: AppearanceApplying
 
@@ -26,6 +30,12 @@ public final class AppSettingsStore: ObservableObject {
     ) {
         self.persister = persister
         self.applyToHost = applyAppearance
+    }
+
+    /// The voice to speak with. An empty or uninstalled id resolves to the
+    /// system default inside `AVSpeechTTS`.
+    public var ttsVoice: Voice {
+        Voice(id: ttsVoiceId, displayName: ttsVoiceId.isEmpty ? "System default" : ttsVoiceId)
     }
 
     public var isSTTConfigured: Bool {
@@ -44,6 +54,7 @@ public final class AppSettingsStore: ObservableObject {
         sttModelPath = nonEmpty(.sttModelPath) ?? autodetect.findModel() ?? ""
         appearance = (nonEmpty(.appearance).flatMap(AppearancePreference.init(rawValue:)))
             ?? AppDefaults.appearance
+        ttsVoiceId = nonEmpty(.ttsVoiceName) ?? ""
         applyToHost(appearance)
     }
 
@@ -55,7 +66,8 @@ public final class AppSettingsStore: ObservableObject {
         audioRetentionDays: Int,
         sttExecutablePath: String,
         sttModelPath: String,
-        appearance: AppearancePreference
+        appearance: AppearancePreference,
+        ttsVoiceId: String
     ) {
         self.modelName = modelName.isEmpty ? AppDefaults.llmModelName : modelName
         self.defaultMode = defaultMode
@@ -63,6 +75,7 @@ public final class AppSettingsStore: ObservableObject {
         self.sttExecutablePath = sttExecutablePath
         self.sttModelPath = sttModelPath
         self.appearance = appearance
+        self.ttsVoiceId = ttsVoiceId
         applyToHost(appearance)
     }
 

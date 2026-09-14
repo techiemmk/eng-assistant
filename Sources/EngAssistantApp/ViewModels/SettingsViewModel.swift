@@ -1,5 +1,6 @@
 import Foundation
 import Core
+import Adapters
 
 @MainActor
 public final class SettingsViewModel: ObservableObject {
@@ -9,6 +10,12 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var sttExecutablePath: String = ""
     @Published public var sttModelPath: String = ""
     @Published public var appearance: AppearancePreference = AppDefaults.appearance
+    /// Empty string means "system default".
+    @Published public var ttsVoiceId: String = ""
+
+    /// Installed speech voices, best quality first. Novelty voices are excluded.
+    @Published public private(set) var availableVoices: [InstalledVoice] = []
+    @Published public private(set) var isPreviewingVoice: Bool = false
 
     @Published public private(set) var savedNotice: String? = nil
     @Published public private(set) var lastError: String? = nil
@@ -23,6 +30,10 @@ public final class SettingsViewModel: ObservableObject {
     private let persister: SettingsPersisting
     private let healthCheck: HealthCheck
     private let ollamaBaseURL: URL
+    /// Injected so tests don't depend on which voices this Mac happens to have.
+    private let voiceCatalog: @Sendable () -> [InstalledVoice]
+    /// Speaks a sample so the user can hear a voice before committing to it.
+    private let previewSpeaker: @Sendable (Voice) async -> Void
     /// The live settings the rest of the app reads. Kept in sync on save so a
     /// changed model name takes effect without a relaunch.
     private let store: AppSettingsStore?
@@ -33,13 +44,67 @@ public final class SettingsViewModel: ObservableObject {
         store: AppSettingsStore? = nil,
         locator: STTLocator = STTLocator(),
         healthCheck: HealthCheck = HealthCheck(),
-        ollamaBaseURL: URL = URL(string: "http://localhost:11434")!
+        ollamaBaseURL: URL = URL(string: "http://localhost:11434")!,
+        voiceCatalog: @escaping @Sendable () -> [InstalledVoice] = { SystemVoiceCatalog.englishVoices() },
+        previewSpeaker: @escaping @Sendable (Voice) async -> Void = SettingsViewModel.speakSample
     ) {
         self.persister = persister
         self.store = store
         self.locator = locator
         self.healthCheck = healthCheck
         self.ollamaBaseURL = ollamaBaseURL
+        self.voiceCatalog = voiceCatalog
+        self.previewSpeaker = previewSpeaker
+    }
+
+    /// The rows to offer. A saved voice that is no longer installed still
+    /// appears, so opening Settings after deleting a voice doesn't silently
+    /// reassign the choice — same reasoning as the model picker.
+    public var selectableVoices: [InstalledVoice] {
+        guard !ttsVoiceId.isEmpty,
+              !availableVoices.contains(where: { $0.id == ttsVoiceId })
+        else { return availableVoices }
+        return availableVoices + [
+            InstalledVoice(id: ttsVoiceId, name: "\(ttsVoiceId) (not installed)",
+                           language: "—", quality: .standard)
+        ]
+    }
+
+    /// True when nothing better than Apple's stock voices is installed. Worth
+    /// surfacing: no code change improves the timbre as much as downloading one
+    /// of Apple's Enhanced or Premium voices, which is free.
+    public var shouldSuggestBetterVoices: Bool {
+        !availableVoices.isEmpty && availableVoices.allSatisfy { !$0.quality.isHighQuality }
+    }
+
+    public func refreshAvailableVoices() {
+        availableVoices = voiceCatalog()
+    }
+
+    /// Speaks a short sample in the currently selected voice.
+    public func previewVoice() async {
+        guard !isPreviewingVoice else { return }
+        isPreviewingVoice = true
+        defer { isPreviewingVoice = false }
+        let selected = availableVoices.first { $0.id == ttsVoiceId }
+        await previewSpeaker(selected?.voice ?? Voice(id: ttsVoiceId, displayName: "Selected"))
+    }
+
+    /// Production preview: synthesise a line and play it. A fixed sample rather
+    /// than arbitrary text so voices are compared on the same words.
+    @Sendable
+    public static func speakSample(_ voice: Voice) async {
+        let tts = AVSpeechTTS()
+        let playback = AVAudioPlaybackImpl()
+        do {
+            let audio = try await tts.synthesize(
+                text: "Good morning. What did you finish yesterday, and what are you picking up today?",
+                voice: voice
+            )
+            try await playback.play(audio)
+        } catch {
+            FileHandle.standardError.write(Data("[SettingsViewModel] voice preview failed: \(error)\n".utf8))
+        }
     }
 
     /// The list to offer in the picker. The saved model is always included even
@@ -85,12 +150,14 @@ public final class SettingsViewModel: ObservableObject {
             if let v = try persister.get(.appearance), let a = AppearancePreference(rawValue: v) {
                 appearance = a
             }
+            ttsVoiceId = (try persister.get(.ttsVoiceName)) ?? ""
             lastError = nil
         } catch {
             lastError = "Load failed: \(error)"
             throw error
         }
         await refreshAvailableModels()
+        refreshAvailableVoices()
     }
 
     public func save() async throws {
@@ -101,13 +168,15 @@ public final class SettingsViewModel: ObservableObject {
             try persister.set(.sttExecutablePath, value: sttExecutablePath)
             try persister.set(.sttModelPath, value: sttModelPath)
             try persister.set(.appearance, value: appearance.rawValue)
+            try persister.set(.ttsVoiceName, value: ttsVoiceId)
             store?.apply(
                 modelName: modelName,
                 defaultMode: defaultMode,
                 audioRetentionDays: audioRetentionDays,
                 sttExecutablePath: sttExecutablePath,
                 sttModelPath: sttModelPath,
-                appearance: appearance
+                appearance: appearance,
+                ttsVoiceId: ttsVoiceId
             )
             savedNotice = "Saved."
             lastError = nil
