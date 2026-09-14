@@ -214,32 +214,28 @@ public enum Theme {
         switch collection {
         case .all: return "square.grid.2x2"
         case .domain(let domain): return domainIcon(domain)
-        case .tag(let tag): return tagIcon(tag)
         }
     }
 
-    public static func tagIcon(_ tag: String) -> String {
-        switch tag {
-        case "medical": return "stethoscope"
-        case "homeopathy": return "leaf.fill"
-        default: return "tag.fill"
-        }
-    }
-
-    // MARK: - Domain icons
     public static func domainIcon(_ domain: ScenarioDomain) -> String {
         switch domain {
-        case .work: return "briefcase.fill"
+        case .homeopathy: return "leaf.fill"
+        case .medical: return "stethoscope"
         case .networking: return "person.2.wave.2.fill"
         case .social: return "party.popper.fill"
+        case .corporate: return "briefcase.fill"
         }
     }
 
+    /// Five distinct hues, each held to 4.5:1 against its own card surface in
+    /// both appearances by `ThemePaletteTests`.
     public static func domainColor(_ domain: ScenarioDomain) -> Color {
         switch domain {
-        case .work: return dynamic(light: (0.13, 0.45, 0.75), dark: (0.45, 0.72, 0.99))
+        case .homeopathy: return dynamic(light: (0.08, 0.42, 0.20), dark: (0.45, 0.85, 0.52))
+        case .medical: return dynamic(light: (0.04, 0.38, 0.42), dark: (0.35, 0.85, 0.88))
         case .networking: return dynamic(light: (0.72, 0.33, 0.12), dark: (0.99, 0.65, 0.42))
         case .social: return dynamic(light: (0.48, 0.33, 0.88), dark: (0.75, 0.63, 0.99))
+        case .corporate: return dynamic(light: (0.13, 0.45, 0.75), dark: (0.45, 0.72, 0.99))
         }
     }
 }

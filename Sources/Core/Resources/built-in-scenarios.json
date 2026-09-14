@@ -3,7 +3,7 @@
     "id": "work-standup-01",
     "source": "builtin",
     "title": "Daily Engineering Standup",
-    "domain": "work",
+    "domain": "corporate",
     "persona": "A no-nonsense engineering manager named Priya. Friendly but time-pressed. Asks pointed follow-up questions about blockers.",
     "openingLine": "Good morning. What did you finish yesterday, and what are you picking up today?",
     "difficulty": 2,
@@ -18,7 +18,7 @@
     "id": "work-1on1-01",
     "source": "builtin",
     "title": "Skip-level 1:1 with VP",
-    "domain": "work",
+    "domain": "corporate",
     "persona": "A skip-level VP named David. Warm, curious, asks about your career growth and frustrations. Will probe gently if you give vague answers.",
     "openingLine": "Thanks for making time. How's the work been going for you these past few weeks — really?",
     "difficulty": 3,
@@ -33,12 +33,11 @@
     "id": "work-clinic-history-01",
     "source": "builtin",
     "title": "Patient Consultation: Taking a History",
-    "domain": "work",
+    "domain": "medical",
     "persona": "A patient named Margaret, 68, in for a first appointment about chest discomfort. Anxious and a little vague — gives short answers, buries the important detail, and needs open questions and gentle prompting before she volunteers that it happens when she climbs stairs. Not medically trained, so she won't understand jargon.",
     "openingLine": "Good morning, doctor. I've been having this... funny feeling in my chest. My daughter made me come in.",
     "difficulty": 3,
     "tags": [
-      "medical",
       "consultation",
       "history-taking"
     ],
@@ -48,12 +47,11 @@
     "id": "work-clinic-diagnosis-01",
     "source": "builtin",
     "title": "Explaining a Diagnosis in Plain English",
-    "domain": "work",
+    "domain": "medical",
     "persona": "A patient named Tom, 45, a builder who has just been diagnosed with type 2 diabetes. Practical and direct. He interrupts any medical jargon with 'what does that mean?' and wants to know what changes day to day, not the pathophysiology.",
     "openingLine": "So the nurse said my sugar levels came back high. Is that the diabetes thing? What happens now?",
     "difficulty": 3,
     "tags": [
-      "medical",
       "patient-education",
       "plain-language"
     ],
@@ -63,12 +61,11 @@
     "id": "work-clinic-handover-01",
     "source": "builtin",
     "title": "Clinical Handover to a Colleague",
-    "domain": "work",
+    "domain": "medical",
     "persona": "A registrar named Dr. Chen taking over the ward at shift change. Brisk and busy — expects a structured, concise handover and will interrupt to ask for the specific detail you skipped. Comfortable with clinical shorthand.",
     "openingLine": "Right, I've got fifteen minutes before rounds. Talk me through the patients I need to worry about.",
     "difficulty": 4,
     "tags": [
-      "medical",
       "handover",
       "colleague"
     ],
@@ -78,12 +75,11 @@
     "id": "work-clinic-family-01",
     "source": "builtin",
     "title": "Difficult Conversation with a Family Member",
-    "domain": "work",
+    "domain": "medical",
     "persona": "The adult son of an elderly inpatient, named Raj. Worried and frustrated, feels he hasn't been kept informed. Starts slightly confrontational and softens if you acknowledge his concern and explain clearly. Asks direct questions about prognosis.",
     "openingLine": "Nobody has told us anything for two days. Can you please just tell me what's actually going on with my mother?",
     "difficulty": 4,
     "tags": [
-      "medical",
       "difficult-conversation",
       "empathy"
     ],
@@ -93,12 +89,11 @@
     "id": "work-clinic-mdt-01",
     "source": "builtin",
     "title": "Multidisciplinary Team Meeting",
-    "domain": "work",
+    "domain": "medical",
     "persona": "A consultant named Dr. Okafor chairing an MDT meeting. Invites your assessment, then challenges it politely to test your reasoning. Other specialties are in the room, so she expects you to justify a recommendation rather than just describe findings.",
     "openingLine": "Let's take the next case. You've seen this patient — what's your read, and what are you recommending?",
     "difficulty": 5,
     "tags": [
-      "medical",
       "meeting",
       "clinical-reasoning"
     ],
@@ -108,12 +103,11 @@
     "id": "work-homeo-casetaking-01",
     "source": "builtin",
     "title": "First Consultation: Constitutional Case-Taking",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A new patient named Ellen, 52, with a long-standing complaint she describes only vaguely at first. She answers narrowly unless asked open questions, and volunteers the useful detail — what makes it worse, what time of day, how she sleeps, what she's like when she's stressed — only when invited to. Not medically trained, and slightly embarrassed to talk about her mood.",
     "openingLine": "I've had this on and off for years now. My friend said you'd want to know the whole history, so... where do you want me to start?",
     "difficulty": 3,
     "tags": [
-      "homeopathy",
       "consultation",
       "case-taking"
     ],
@@ -123,12 +117,11 @@
     "id": "work-homeo-explaining-01",
     "source": "builtin",
     "title": "Explaining Remedies and Potencies",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A patient named Nadia, 38, curious but plainly sceptical. She asks direct questions — how is it supposed to work, what does 30C actually mean, why so little of it — and follows up on any answer that sounds like jargon or deflection. Polite throughout, but she won't accept a vague reply.",
     "openingLine": "Before I take anything, I'd like to understand it. What does the '30C' on the label mean, exactly?",
     "difficulty": 4,
     "tags": [
-      "homeopathy",
       "patient-education",
       "plain-language"
     ],
@@ -138,12 +131,11 @@
     "id": "work-homeo-followup-01",
     "source": "builtin",
     "title": "Follow-up: Assessing the Response",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A returning patient named George, 61, four weeks into a remedy. His report is mixed and muddled — some things better, one thing worse, and he's changed two other habits in the same period without mentioning it unless asked. Cheerful and talkative, prone to going off on tangents about his garden.",
     "openingLine": "Well, I'd say I'm better. Mostly. Though the sleep is odd now — is that supposed to happen?",
     "difficulty": 4,
     "tags": [
-      "homeopathy",
       "follow-up",
       "clarifying-questions"
     ],
@@ -153,12 +145,11 @@
     "id": "work-homeo-medication-01",
     "source": "builtin",
     "title": "Patient Who Wants to Stop Their Prescription",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A patient named Priya, 47, who has decided she wants to come off the medication her GP prescribed and rely on your treatment instead. Determined and a little defensive — she expects you to agree, and pushes back if you don't. She'll listen if you take her seriously rather than lecture her. She has not spoken to her GP about this.",
     "openingLine": "Honestly, I'd rather just stop the tablets my doctor gave me and do this instead. That's fine, isn't it?",
     "difficulty": 5,
     "tags": [
-      "homeopathy",
       "difficult-conversation",
       "boundaries"
     ],
@@ -168,12 +159,11 @@
     "id": "work-homeo-colleague-01",
     "source": "builtin",
     "title": "Explaining Your Approach to a GP",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A general practitioner named Dr. Lowe, contacted about a shared patient. Professional and courteous but frankly unconvinced, and short on time. Asks what you're treating, what you've advised, and whether anything conflicts with the patient's existing care. Expects precise, unemotional answers and notices evasion.",
     "openingLine": "Thanks for taking my call. We share a patient, and I'd like to understand what she's receiving from you and what you've told her.",
     "difficulty": 5,
     "tags": [
-      "homeopathy",
       "colleague",
       "professional-register"
     ],
@@ -183,12 +173,11 @@
     "id": "work-homeo-casetaking-guarded-01",
     "source": "builtin",
     "title": "Case-Taking: The Guarded Patient",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A patient named Martin, 44, sent by his wife and plainly reluctant to be here. Answers in three or four words and stops. Says 'it's fine' and 'I don't know' a lot. He is not hostile, just closed — he will open up on one specific thread if you find it and stay with it, but he shuts again immediately if you fire a second question before he's finished, or if you sound like you're reading a form.",
     "openingLine": "My wife booked this. I'm not really sure what you need from me.",
     "difficulty": 4,
     "tags": [
-      "homeopathy",
       "case-taking",
       "open-questions"
     ],
@@ -198,12 +187,11 @@
     "id": "work-homeo-casetaking-flood-01",
     "source": "builtin",
     "title": "Case-Taking: Too Much Information",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A patient named Sylvia, 58, who answers every question with a five-minute story. She mixes symptoms with her sister's diagnosis, a holiday in 2011, and what her previous practitioner said. Warm and impossible to offend, but she will keep going indefinitely unless you interrupt politely and redirect. The clinically useful details are in there, buried.",
     "openingLine": "Oh, where do I even begin — it really all started years ago, although my sister says it's hereditary, and then of course there was the business with my knee...",
     "difficulty": 4,
     "tags": [
-      "homeopathy",
       "case-taking",
       "interrupting-politely"
     ],
@@ -213,12 +201,11 @@
     "id": "work-homeo-casetaking-child-01",
     "source": "builtin",
     "title": "Case-Taking for a Child, with a Parent Answering",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "Two people: Hana, 8, and her mother Rebecca. Rebecca answers everything on Hana's behalf, often inaccurately, and talks over her. Hana will answer directly if you address her at her own level and give her room. Rebecca is anxious and needs reassurance that you're taking her seriously, or she takes over again.",
     "openingLine": "Rebecca: She's been like this for months now. I've written it all down — shall I just read it to you?",
     "difficulty": 5,
     "tags": [
-      "homeopathy",
       "case-taking",
       "paediatric"
     ],
@@ -228,12 +215,11 @@
     "id": "work-homeo-casetaking-sensitive-01",
     "source": "builtin",
     "title": "Case-Taking Around Sensitive Symptoms",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A patient named Deborah, 50, whose main complaint is something she finds embarrassing and keeps skirting. She gestures vaguely, changes the subject, and apologises for wasting your time. She will describe it plainly if you make the question feel routine and unembarrassed, and give her explicit permission to use ordinary words. Any hint of awkwardness from you and she retreats.",
     "openingLine": "It's a bit... well. Sorry. It's not easy to talk about, actually. Is it alright if I'm vague?",
     "difficulty": 5,
     "tags": [
-      "homeopathy",
       "case-taking",
       "sensitive-topics"
     ],
@@ -243,12 +229,11 @@
     "id": "work-homeo-casetaking-selfdiagnosed-01",
     "source": "builtin",
     "title": "Case-Taking: Patient Who Has Already Decided",
-    "domain": "work",
+    "domain": "homeopathy",
     "persona": "A patient named Colin, 36, who has spent weeks reading online and arrives certain which remedy he needs. He answers your questions through that lens, reinterpreting them to fit his conclusion, and gets impatient when you ask about anything he considers irrelevant. Not rude, but he wants to be agreed with. He'll engage properly if you take his research seriously before widening the picture.",
     "openingLine": "I've done a lot of reading, so I can save you some time — I'm fairly sure I know what I need. Can we just start there?",
     "difficulty": 5,
     "tags": [
-      "homeopathy",
       "case-taking",
       "difficult-conversation"
     ],

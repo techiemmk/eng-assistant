@@ -57,7 +57,7 @@ final class InMemoryAudioFilePersister: AudioFilePersisting, @unchecked Sendable
 
 @Suite struct SessionEngineTests {
     private static let scenario = Scenario(
-        id: "test-01", source: .builtin, title: "Test", domain: .work,
+        id: "test-01", source: .builtin, title: "Test", domain: .corporate,
         persona: "Test persona.",
         openingLine: "Hi, how are you?",
         difficulty: 2, tags: [], notes: nil

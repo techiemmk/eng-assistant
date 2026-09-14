@@ -221,13 +221,27 @@ to `.active` via `SessionPersisting.reactivate`, which also clears `ended_at` so
 the duration spans the whole conversation. New turns continue the existing
 numbering.
 
-**Scenario collections.** `PracticeViewModel.Collection` is either a domain or a
-tag, because the work domain now holds office, clinical and homeopathy
-scenarios. Tags that represent a whole track are listed in
-`PracticeViewModel.trackTags`, and a chip only appears if the catalog actually
-contains that track. The track tags are kept **disjoint** — a scenario carries
-at most one — so the chips partition the catalog rather than overlapping;
-`HomeopathyScenarioTests.trackTagsDoNotOverlap` enforces that.
+**Scenario domains are the filter chips.** There are five — homeopathy,
+medical, networking, social, corporate — and every scenario belongs to exactly
+one, so they partition the catalog (`HomeopathyScenarioTests.domainsPartitionTheCatalog`).
+Chip order comes from `ScenarioDomain.displayOrder`, declared explicitly rather
+than relying on `allCases` so that reordering the enum can't silently reshuffle
+the UI; `ScenarioDomainTests.displayOrderCoversEveryDomain` catches a new domain
+that someone forgets to list, which would otherwise just never appear.
+
+This replaced a single broad `work` domain that had been sliced up by tag
+(`PracticeViewModel.trackTags`, now gone, along with `Collection.tag`). The tag
+approach was needed only because `work` held office, clinical and homeopathic
+scenarios together; splitting it made the indirection redundant, and it also
+fixed clinical scenarios being badged "Work" on their cards. Note the scenario
+**ids keep their historical `work-` prefix** (`work-standup-01`,
+`work-clinic-mdt-01`) — `sessions.scenario_id` references them, so renaming
+would orphan a user's history for no user-visible gain.
+
+Adding a domain means: a case on `ScenarioDomain`, an entry in `displayOrder`,
+and an icon plus a light/dark colour pair in `Theme` — the colour has to clear
+4.5:1 against its own card surface in both appearances, which `ThemePaletteTests`
+checks for every case automatically.
 
 **The app icon is generated, not hand-drawn.** `swift scripts/make-app-icon.swift`
 renders every size into `build/AppIcon.iconset`, runs `iconutil`, and writes

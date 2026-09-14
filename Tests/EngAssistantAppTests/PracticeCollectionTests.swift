@@ -17,52 +17,96 @@ import Core
         #expect(vm.filteredScenarios.count == vm.scenarios.count)
     }
 
-    @Test func offersAChipForEveryDomainPlusTheMedicalTrack() throws {
+    /// The chip row is All followed by the domains in `displayOrder`. The order
+    /// is deliberate, so it's asserted exactly rather than as a set.
+    @Test func chipsAppearInTheRequestedOrder() throws {
         let vm = try Self.viewModel()
-        #expect(vm.collections.contains(.all))
-        for domain in ScenarioDomain.allCases {
-            #expect(vm.collections.contains(.domain(domain)), "no chip for \(domain)")
-        }
-        #expect(vm.collections.contains(.tag("medical")))
+        #expect(vm.collections == [
+            .all,
+            .domain(.homeopathy),
+            .domain(.medical),
+            .domain(.networking),
+            .domain(.social),
+            .domain(.corporate),
+        ])
     }
 
-    @Test func filteringByTagNarrowsToThatTrack() throws {
+    @Test func chipLabelsReadAsRequested() throws {
         let vm = try Self.viewModel()
-        vm.collection = .tag("medical")
+        #expect(vm.collections.map(\.label) == [
+            "All", "Homeopathy", "Medical", "Networking", "Social", "Corporate",
+        ])
+    }
+
+    /// `work` was replaced, not hidden. The chip is gone, and Corporate is
+    /// what took over the scenarios that were in it.
+    @Test func thereIsNoWorkChip() throws {
+        let vm = try Self.viewModel()
+        #expect(!vm.collections.map(\.label).contains("Work"))
+        #expect(vm.collections.contains(.domain(.corporate)))
+    }
+
+    @Test func filteringByCorporateShowsOnlyTheOfficeScenarios() throws {
+        let vm = try Self.viewModel()
+        vm.collection = .domain(.corporate)
+        let ids = vm.filteredScenarios.map(\.id)
+        #expect(ids.sorted() == ["work-1on1-01", "work-standup-01"])
+    }
+
+    @Test func filteringByHomeopathyExcludesTheClinicalScenarios() throws {
+        let vm = try Self.viewModel()
+        vm.collection = .domain(.homeopathy)
         #expect(!vm.filteredScenarios.isEmpty)
-        #expect(vm.filteredScenarios.allSatisfy { $0.tags.contains("medical") })
+        #expect(vm.filteredScenarios.allSatisfy { $0.domain == .homeopathy })
     }
 
-    /// Medical scenarios live in the work domain, so the work chip has to keep
-    /// showing them — the tag chip is a narrowing, not a separate bucket.
-    @Test func workDomainStillIncludesTheMedicalScenarios() throws {
+    @Test func filteringByMedicalExcludesHomeopathy() throws {
         let vm = try Self.viewModel()
-        vm.collection = .domain(.work)
-        #expect(vm.filteredScenarios.contains { $0.tags.contains("medical") })
-        #expect(vm.filteredScenarios.contains { !$0.tags.contains("medical") })
+        vm.collection = .domain(.medical)
+        #expect(!vm.filteredScenarios.isEmpty)
+        #expect(vm.filteredScenarios.allSatisfy { $0.domain == .medical })
     }
 
-    /// The legacy `domainFilter` accessor still has to behave, since it's what
-    /// ContentView seeds the default mode through.
+    /// Every chip must lead somewhere. An empty chip is a dead end the user
+    /// can tap.
+    @Test func noChipIsEmpty() throws {
+        let vm = try Self.viewModel()
+        for collection in vm.collections {
+            vm.collection = collection
+            #expect(!vm.filteredScenarios.isEmpty, "\(collection.label) shows nothing")
+        }
+    }
+
+    /// Selecting each chip in turn should account for the whole catalog.
+    @Test func theChipsBetweenThemCoverEveryScenario() throws {
+        let vm = try Self.viewModel()
+        var seen = Set<String>()
+        for collection in vm.collections where collection != .all {
+            vm.collection = collection
+            seen.formUnion(vm.filteredScenarios.map(\.id))
+        }
+        #expect(seen.count == vm.scenarios.count, "some scenario has no chip")
+    }
+
+    /// The legacy `domainFilter` accessor still has to behave — ContentView
+    /// seeds the default mode through it.
     @Test func domainFilterAccessorStaysInSyncWithCollection() throws {
         let vm = try Self.viewModel()
         vm.domainFilter = .social
         #expect(vm.collection == .domain(.social))
         #expect(vm.domainFilter == .social)
 
-        vm.collection = .tag("medical")
-        #expect(vm.domainFilter == nil, "a tag collection isn't a domain")
-
         vm.domainFilter = nil
         #expect(vm.collection == .all)
+        #expect(vm.domainFilter == nil)
     }
 
     /// Switching filters must not leave the Start button armed on a scenario
     /// that's no longer on screen.
     @Test func selectionIsClearedWhenTheFilterHidesIt() throws {
         let vm = try Self.viewModel()
-        let medical = vm.scenarios.first { $0.tags.contains("medical") }!
-        vm.selectedScenarioId = medical.id
+        let homeopathy = vm.scenarios.first { $0.domain == .homeopathy }!
+        vm.selectedScenarioId = homeopathy.id
 
         vm.collection = .domain(.social)
         vm.pruneSelectionIfHidden()
@@ -72,48 +116,15 @@ import Core
 
     @Test func selectionSurvivesAFilterThatStillShowsIt() throws {
         let vm = try Self.viewModel()
-        let medical = vm.scenarios.first { $0.tags.contains("medical") }!
-        vm.selectedScenarioId = medical.id
+        let homeopathy = vm.scenarios.first { $0.domain == .homeopathy }!
+        vm.selectedScenarioId = homeopathy.id
 
-        vm.collection = .tag("medical")
+        vm.collection = .domain(.homeopathy)
         vm.pruneSelectionIfHidden()
-        #expect(vm.selectedScenarioId == medical.id)
+        #expect(vm.selectedScenarioId == homeopathy.id)
     }
 
-    @Test func offersAChipForTheHomeopathyTrack() throws {
-        let vm = try Self.viewModel()
-        #expect(vm.collections.contains(.tag("homeopathy")))
-    }
-
-    @Test func filteringByHomeopathyExcludesTheClinicalTrack() throws {
-        let vm = try Self.viewModel()
-        vm.collection = .tag("homeopathy")
-        #expect(!vm.filteredScenarios.isEmpty)
-        #expect(vm.filteredScenarios.allSatisfy { $0.tags.contains("homeopathy") })
-        #expect(vm.filteredScenarios.allSatisfy { !$0.tags.contains("medical") })
-    }
-
-    /// Both tracks live in the work domain, so the Work chip has to hold all
-    /// three kinds — office, clinical, homeopathy.
-    @Test func workDomainHoldsEveryTrack() throws {
-        let vm = try Self.viewModel()
-        vm.collection = .domain(.work)
-        #expect(vm.filteredScenarios.contains { $0.tags.contains("medical") })
-        #expect(vm.filteredScenarios.contains { $0.tags.contains("homeopathy") })
-        #expect(vm.filteredScenarios.contains {
-            !$0.tags.contains("medical") && !$0.tags.contains("homeopathy")
-        })
-    }
-
-    @Test func chipLabelsAreHumanReadable() throws {
-        #expect(PracticeViewModel.Collection.all.label == "All")
-        #expect(PracticeViewModel.Collection.domain(.work).label == "Work")
-        #expect(PracticeViewModel.Collection.tag("medical").label == "Medical")
-        #expect(PracticeViewModel.Collection.tag("homeopathy").label == "Homeopathy")
-    }
-
-    /// Collections are used as ForEach identities, so their ids must be stable
-    /// and distinct across the two kinds.
+    /// Collections are ForEach identities, so their ids must be distinct.
     @Test func collectionIdsAreDistinct() throws {
         let vm = try Self.viewModel()
         let ids = vm.collections.map(\.id)

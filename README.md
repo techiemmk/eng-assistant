@@ -10,19 +10,23 @@ A native macOS app for practicing **advanced English conversation** with a local
 
 You pick a scenario (work standup, patient consultation, conference small talk, dinner with friends, etc.) or describe one yourself. The app plays the AI persona's opening line, you push to talk (the mic stays open until you tap again or pause for ~1.5s), the AI responds in character. After you end the session, it analyzes the transcript and gives you a debrief: per-turn metrics, recurring weak spots it noticed across sessions, and suggested drills for next time.
 
-Scenarios are grouped by domain — work, networking, social — plus two
-practitioner tracks inside work:
+Scenarios are grouped into five practice domains, which are also the filter
+chips on the Practice screen:
 
-- **Medical** — taking a patient history, explaining a diagnosis in plain
+- **Homeopathy** (10) — weighted towards case-taking: a first constitutional
+  consultation, a guarded patient who answers in four words, one who buries the
+  useful detail in a five-minute story, a child whose parent answers for her,
+  sensitive symptoms the patient keeps skirting, and someone who has already
+  picked his own remedy online. Plus explaining potencies to a sceptic,
+  assessing a follow-up response, holding a boundary with a patient who wants to
+  stop her prescription, and explaining your approach to a GP.
+- **Medical** (5) — taking a patient history, explaining a diagnosis in plain
   English, clinical handover, a difficult conversation with a family member,
   presenting at an MDT meeting.
-- **Homeopathy** — ten scenarios, weighted towards case-taking: a first
-  constitutional consultation, a guarded patient who answers in four words, one
-  who buries the useful detail in a five-minute story, a child whose parent
-  answers for her, sensitive symptoms the patient keeps skirting, and someone
-  who has already picked his own remedy online. Plus explaining potencies to a
-  sceptic, assessing a follow-up response, holding a boundary with a patient who
-  wants to stop her prescription, and explaining your approach to a GP.
+- **Networking** (2) — conference small talk, meeting a new colleague.
+- **Social** (2) — dinner with friends, defending an opinion about a film.
+- **Corporate** (2) — the daily engineering standup and a skip-level 1:1 with a
+  VP.
 
 You can also **continue** a past conversation instead of starting over: the
 Sessions list has a Continue button on every row, which reopens that session and

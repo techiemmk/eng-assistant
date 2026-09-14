@@ -3,27 +3,28 @@ import Core
 
 @MainActor
 public final class PracticeViewModel: ObservableObject {
-    /// What the chip row above the scenario grid selects. Domains alone stopped
-    /// being enough once the work domain held both office and clinical
-    /// scenarios, so a collection can also be a tag.
+    /// What the chip row above the scenario grid selects: everything, or one
+    /// practice domain.
+    ///
+    /// This briefly also carried a `tag` case, back when the single broad
+    /// `work` domain had to be sliced up by tag to be navigable. Splitting
+    /// `work` into `corporate` / `medical` / `homeopathy` made that
+    /// unnecessary — domains partition the catalog on their own now.
     public enum Collection: Hashable, Identifiable {
         case all
         case domain(ScenarioDomain)
-        case tag(String)
 
         public var id: String {
             switch self {
             case .all: return "all"
             case .domain(let domain): return "domain:\(domain.rawValue)"
-            case .tag(let tag): return "tag:\(tag)"
             }
         }
 
         public var label: String {
             switch self {
             case .all: return "All"
-            case .domain(let domain): return domain.rawValue.capitalized
-            case .tag(let tag): return tag.capitalized
+            case .domain(let domain): return domain.label
             }
         }
     }
@@ -50,24 +51,14 @@ public final class PracticeViewModel: ObservableObject {
         }
     }
 
-    /// The chips to offer: every domain, plus a chip for each tag that marks a
-    /// distinct practice track. Only tracks actually present in the catalog
-    /// appear, so removing the medical scenarios removes the chip with them.
+    /// The chips to offer, in `ScenarioDomain.displayOrder`. A domain with no
+    /// scenarios is skipped rather than shown empty, so deleting a whole
+    /// practice area removes its chip with it.
     public var collections: [Collection] {
-        var result: [Collection] = [.all]
-        result += ScenarioDomain.allCases
+        [.all] + ScenarioDomain.displayOrder
             .filter { domain in scenarios.contains { $0.domain == domain } }
             .map(Collection.domain)
-        result += Self.trackTags
-            .filter { tag in scenarios.contains { $0.tags.contains(tag) } }
-            .map(Collection.tag)
-        return result
     }
-
-    /// Tags that represent a whole practice track rather than a loose label.
-    /// Kept disjoint on purpose — a scenario carries one track tag, so the
-    /// chips partition the catalog rather than overlapping.
-    public static let trackTags = ["medical", "homeopathy"]
 
     public var filteredScenarios: [Scenario] {
         switch collection {
@@ -75,8 +66,6 @@ public final class PracticeViewModel: ObservableObject {
             return scenarios
         case .domain(let domain):
             return scenarios.filter { $0.domain == domain }
-        case .tag(let tag):
-            return scenarios.filter { $0.tags.contains(tag) }
         }
     }
 

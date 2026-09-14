@@ -8,7 +8,7 @@ import Foundation
             id: "work-standup-01",
             source: .builtin,
             title: "Daily Standup",
-            domain: .work,
+            domain: .corporate,
             persona: "A no-nonsense engineering manager.",
             openingLine: "Good morning, what did you finish yesterday?",
             difficulty: 2,
@@ -21,10 +21,12 @@ import Foundation
     }
 
     @Test func domainCases() {
-        #expect(ScenarioDomain.allCases.count == 3)
-        #expect(ScenarioDomain.allCases.contains(.work))
+        #expect(ScenarioDomain.allCases.count == 5)
+        #expect(ScenarioDomain.allCases.contains(.homeopathy))
+        #expect(ScenarioDomain.allCases.contains(.medical))
         #expect(ScenarioDomain.allCases.contains(.networking))
         #expect(ScenarioDomain.allCases.contains(.social))
+        #expect(ScenarioDomain.allCases.contains(.corporate))
     }
 }
 

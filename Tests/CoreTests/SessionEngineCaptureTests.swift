@@ -8,7 +8,7 @@ import Fakes
 /// engine now hands that timing to the caller.
 @Suite struct SessionEngineCaptureTests {
     private static let scenario = Scenario(
-        id: "capture-01", source: .builtin, title: "Capture", domain: .work,
+        id: "capture-01", source: .builtin, title: "Capture", domain: .corporate,
         persona: "Test persona.", openingLine: "Hi.",
         difficulty: 2, tags: [], notes: nil
     )

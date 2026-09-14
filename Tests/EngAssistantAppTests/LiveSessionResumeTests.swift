@@ -9,7 +9,7 @@ import Fakes
 @MainActor
 @Suite struct LiveSessionResumeTests {
     private static let scenario = Scenario(
-        id: "resume-vm-01", source: .builtin, title: "Resume", domain: .work,
+        id: "resume-vm-01", source: .builtin, title: "Resume", domain: .corporate,
         persona: "Test persona.", openingLine: "Morning.",
         difficulty: 2, tags: [], notes: nil
     )

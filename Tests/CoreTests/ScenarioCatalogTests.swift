@@ -28,27 +28,30 @@ import Testing
     }
 }
 
-/// The medical scenarios are a practice track inside the work domain, reachable
-/// by tag rather than by a domain of their own.
+/// Medical is its own domain now. It used to be a tag inside a single broad
+/// `work` domain, which stopped being navigable once the clinical and
+/// homeopathic sets outnumbered the office ones.
 @Suite struct MedicalScenarioTests {
     private static func catalog() throws -> ScenarioCatalog {
         try ScenarioCatalog.loadBuiltIn()
     }
 
     @Test func medicalScenariosExist() throws {
-        let medical = try Self.catalog().scenarios(withTag: "medical")
+        let medical = try Self.catalog().scenarios(in: .medical)
         #expect(medical.count >= 5, "only \(medical.count) medical scenarios")
     }
 
-    @Test func medicalScenariosSitInTheWorkDomain() throws {
-        let medical = try Self.catalog().scenarios(withTag: "medical")
-        #expect(medical.allSatisfy { $0.domain == .work })
+    @Test func medicalScenariosAreTheirOwnDomain() throws {
+        let medical = try Self.catalog().scenarios(in: .medical)
+        #expect(medical.allSatisfy { $0.domain == .medical })
+        // And they no longer carry a redundant tag duplicating the domain.
+        #expect(medical.allSatisfy { !$0.tags.contains("medical") })
     }
 
     /// A scenario is only usable if the persona and opening line are both
     /// substantial enough for the model to stay in character.
     @Test func medicalScenariosAreFullySpecified() throws {
-        for scenario in try Self.catalog().scenarios(withTag: "medical") {
+        for scenario in try Self.catalog().scenarios(in: .medical) {
             #expect(!scenario.title.isEmpty)
             #expect(scenario.persona.count > 80, "\(scenario.id) persona is thin")
             #expect(scenario.openingLine.count > 20, "\(scenario.id) opening line is thin")
@@ -59,7 +62,7 @@ import Testing
     /// They should span a range, not all sit at the same level — a clinician
     /// practising history-taking isn't doing the same difficulty as an MDT.
     @Test func medicalScenariosSpanARangeOfDifficulty() throws {
-        let levels = Set(try Self.catalog().scenarios(withTag: "medical").map(\.difficulty))
+        let levels = Set(try Self.catalog().scenarios(in: .medical).map(\.difficulty))
         #expect(levels.count >= 3, "medical difficulties collapse to \(levels)")
     }
 
@@ -68,44 +71,52 @@ import Testing
         #expect(Set(ids).count == ids.count)
     }
 
-    /// The non-medical work scenarios must still be reachable — the clinical
-    /// track was added alongside them, not over them.
-    @Test func officeWorkScenariosStillPresent() throws {
-        let work = try Self.catalog().scenarios(in: .work)
-        let office = work.filter { !$0.tags.contains("medical") }
-        #expect(office.count >= 2)
+    /// The office scenarios that used to sit in `work` moved to `corporate`
+    /// rather than being dropped in the split.
+    @Test func corporateScenariosSurvivedTheSplit() throws {
+        let corporate = try Self.catalog().scenarios(in: .corporate)
+        #expect(corporate.count >= 2)
+        let ids = corporate.map(\.id)
+        #expect(ids.contains("work-standup-01"), "the daily standup should be corporate")
+        #expect(ids.contains("work-1on1-01"), "the skip-level 1:1 should be corporate")
     }
 }
 
 
-/// Homeopathy is its own practice track, kept disjoint from the clinical one so
-/// the two filter chips partition the catalog instead of overlapping.
+/// Homeopathy is its own domain, disjoint from the clinical one by construction
+/// now that a scenario has exactly one domain.
 @Suite struct HomeopathyScenarioTests {
     private static func catalog() throws -> ScenarioCatalog {
         try ScenarioCatalog.loadBuiltIn()
     }
 
     @Test func homeopathyScenariosExist() throws {
-        let scenarios = try Self.catalog().scenarios(withTag: "homeopathy")
+        let scenarios = try Self.catalog().scenarios(in: .homeopathy)
         #expect(scenarios.count >= 5, "only \(scenarios.count) homeopathy scenarios")
     }
 
-    @Test func homeopathyScenariosSitInTheWorkDomain() throws {
-        let scenarios = try Self.catalog().scenarios(withTag: "homeopathy")
-        #expect(scenarios.allSatisfy { $0.domain == .work })
+    @Test func homeopathyScenariosAreTheirOwnDomain() throws {
+        let scenarios = try Self.catalog().scenarios(in: .homeopathy)
+        #expect(scenarios.allSatisfy { $0.domain == .homeopathy })
+        #expect(scenarios.allSatisfy { !$0.tags.contains("homeopathy") })
     }
 
-    /// If a scenario carried both track tags it would show under both chips,
-    /// which defeats the point of having two.
-    @Test func trackTagsDoNotOverlap() throws {
+    /// Domains partition the catalog: every scenario appears under exactly one
+    /// chip, so no scenario is reachable from two and none is orphaned.
+    @Test func domainsPartitionTheCatalog() throws {
         let catalog = try Self.catalog()
-        let medical = Set(catalog.scenarios(withTag: "medical").map(\.id))
-        let homeopathy = Set(catalog.scenarios(withTag: "homeopathy").map(\.id))
-        #expect(medical.isDisjoint(with: homeopathy))
+        let byDomain = ScenarioDomain.allCases.map { Set(catalog.scenarios(in: $0).map(\.id)) }
+        let total = byDomain.reduce(0) { $0 + $1.count }
+        #expect(total == catalog.allScenarios.count, "a scenario is in two domains or none")
+        for (index, ids) in byDomain.enumerated() {
+            for other in byDomain[(index + 1)...] {
+                #expect(ids.isDisjoint(with: other))
+            }
+        }
     }
 
     @Test func homeopathyScenariosAreFullySpecified() throws {
-        for scenario in try Self.catalog().scenarios(withTag: "homeopathy") {
+        for scenario in try Self.catalog().scenarios(in: .homeopathy) {
             #expect(!scenario.title.isEmpty)
             #expect(scenario.persona.count > 80, "\(scenario.id) persona is thin")
             #expect(scenario.openingLine.count > 20, "\(scenario.id) opening line is thin")
@@ -115,7 +126,7 @@ import Testing
     }
 
     @Test func homeopathyScenariosSpanARangeOfDifficulty() throws {
-        let levels = Set(try Self.catalog().scenarios(withTag: "homeopathy").map(\.difficulty))
+        let levels = Set(try Self.catalog().scenarios(in: .homeopathy).map(\.difficulty))
         #expect(levels.count >= 3, "homeopathy difficulties collapse to \(levels)")
     }
 
@@ -123,7 +134,7 @@ import Testing
     /// a first case-taking, a follow-up, and a professional exchange are
     /// different language problems.
     @Test func homeopathyScenariosCoverDistinctConversationTypes() throws {
-        let scenarios = try Self.catalog().scenarios(withTag: "homeopathy")
+        let scenarios = try Self.catalog().scenarios(in: .homeopathy)
         let secondaryTags = Set(scenarios.flatMap(\.tags)).subtracting(["homeopathy"])
         #expect(secondaryTags.count >= 4, "only \(secondaryTags.count) distinct kinds")
     }
@@ -136,7 +147,7 @@ import Testing
 @Suite struct HomeopathyCaseTakingTests {
     private static func caseTaking() throws -> [Scenario] {
         try ScenarioCatalog.loadBuiltIn()
-            .scenarios(withTag: "homeopathy")
+            .scenarios(in: .homeopathy)
             .filter { $0.tags.contains("case-taking") }
     }
 
@@ -184,5 +195,36 @@ import Testing
             // direction or an instruction to the user.
             #expect(!scenario.openingLine.hasPrefix("You "), "\(scenario.id) opens with an instruction")
         }
+    }
+}
+
+/// The domain list drives the filter chips, so its shape is part of the UI.
+@Suite struct ScenarioDomainTests {
+    /// A domain missing from `displayOrder` would simply never appear as a
+    /// chip — silently unreachable. This is the guard the enum's doc comment
+    /// promises.
+    @Test func displayOrderCoversEveryDomain() {
+        #expect(Set(ScenarioDomain.displayOrder) == Set(ScenarioDomain.allCases))
+        #expect(ScenarioDomain.displayOrder.count == ScenarioDomain.allCases.count,
+                "displayOrder lists a domain twice")
+    }
+
+    /// The order was chosen deliberately, so it's asserted rather than assumed.
+    @Test func displayOrderIsTheRequestedOrder() {
+        #expect(ScenarioDomain.displayOrder == [.homeopathy, .medical, .networking, .social, .corporate])
+    }
+
+    @Test func everyDomainHasAReadableLabel() {
+        #expect(ScenarioDomain.homeopathy.label == "Homeopathy")
+        #expect(ScenarioDomain.medical.label == "Medical")
+        #expect(ScenarioDomain.networking.label == "Networking")
+        #expect(ScenarioDomain.social.label == "Social")
+        #expect(ScenarioDomain.corporate.label == "Corporate")
+    }
+
+    /// `work` is gone; nothing should still be decoding into it.
+    @Test func workIsNoLongerADomain() {
+        #expect(ScenarioDomain(rawValue: "work") == nil)
+        #expect(!ScenarioDomain.allCases.map(\.rawValue).contains("work"))
     }
 }

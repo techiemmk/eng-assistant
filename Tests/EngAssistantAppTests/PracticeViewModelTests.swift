@@ -27,8 +27,8 @@ import Core
     @Test func filteringByDomainNarrowsResults() async throws {
         let catalog = try ScenarioCatalog.loadBuiltIn()
         let vm = PracticeViewModel(catalog: catalog)
-        vm.domainFilter = .work
-        #expect(vm.filteredScenarios.allSatisfy { $0.domain == .work })
+        vm.domainFilter = .corporate
+        #expect(vm.filteredScenarios.allSatisfy { $0.domain == .corporate })
         #expect(vm.filteredScenarios.count >= 2)
     }
 

@@ -7,7 +7,7 @@ import Foundation
         id: "work-standup-01",
         source: .builtin,
         title: "Standup",
-        domain: .work,
+        domain: .corporate,
         persona: "A no-nonsense engineering manager named Priya.",
         openingLine: "Good morning.",
         difficulty: 2,
@@ -72,7 +72,7 @@ import Foundation
 /// on every marker, and the user's wrong wording quoted after "instead of".
 @Suite struct PersonaBuilderCoachContractTests {
     private static let scenario = Scenario(
-        id: "work-standup-01", source: .builtin, title: "Standup", domain: .work,
+        id: "work-standup-01", source: .builtin, title: "Standup", domain: .corporate,
         persona: "A no-nonsense engineering manager named Priya.",
         openingLine: "Good morning.", difficulty: 2, tags: ["meeting"], notes: nil
     )
