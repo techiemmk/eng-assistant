@@ -25,6 +25,15 @@ cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/$APP_NAME"
 chmod +x "$APP_DIR/Contents/MacOS/$APP_NAME"
 cp "Sources/EngAssistantApp/Info.plist" "$APP_DIR/Contents/Info.plist"
 
+# App icon. Info.plist names AppIcon, so a missing file here means the app
+# silently shows the generic placeholder in the Dock — worth failing on.
+if [[ -f "Resources/AppIcon.icns" ]]; then
+    cp "Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
+else
+    echo "✗ Resources/AppIcon.icns missing — run: swift scripts/make-app-icon.swift"
+    exit 1
+fi
+
 # Copy SPM resource bundle if it exists (for built-in scenarios JSON, etc.)
 if [[ -d ".build/release/EngAssistant_Core.bundle" ]]; then
     cp -R ".build/release/EngAssistant_Core.bundle" "$APP_DIR/"

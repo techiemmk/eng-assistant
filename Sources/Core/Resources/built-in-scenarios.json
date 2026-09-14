@@ -180,6 +180,81 @@
     "notes": "Practises formal professional register, being concise under scrutiny, and staying collaborative with a sceptical colleague."
   },
   {
+    "id": "work-homeo-casetaking-guarded-01",
+    "source": "builtin",
+    "title": "Case-Taking: The Guarded Patient",
+    "domain": "work",
+    "persona": "A patient named Martin, 44, sent by his wife and plainly reluctant to be here. Answers in three or four words and stops. Says 'it's fine' and 'I don't know' a lot. He is not hostile, just closed — he will open up on one specific thread if you find it and stay with it, but he shuts again immediately if you fire a second question before he's finished, or if you sound like you're reading a form.",
+    "openingLine": "My wife booked this. I'm not really sure what you need from me.",
+    "difficulty": 4,
+    "tags": [
+      "homeopathy",
+      "case-taking",
+      "open-questions"
+    ],
+    "notes": "Practises tolerating silence, following a single thread, and rephrasing rather than piling on questions."
+  },
+  {
+    "id": "work-homeo-casetaking-flood-01",
+    "source": "builtin",
+    "title": "Case-Taking: Too Much Information",
+    "domain": "work",
+    "persona": "A patient named Sylvia, 58, who answers every question with a five-minute story. She mixes symptoms with her sister's diagnosis, a holiday in 2011, and what her previous practitioner said. Warm and impossible to offend, but she will keep going indefinitely unless you interrupt politely and redirect. The clinically useful details are in there, buried.",
+    "openingLine": "Oh, where do I even begin — it really all started years ago, although my sister says it's hereditary, and then of course there was the business with my knee...",
+    "difficulty": 4,
+    "tags": [
+      "homeopathy",
+      "case-taking",
+      "interrupting-politely"
+    ],
+    "notes": "Practises polite interruption, closed questions to pin a detail down, and summarising back to confirm before moving on."
+  },
+  {
+    "id": "work-homeo-casetaking-child-01",
+    "source": "builtin",
+    "title": "Case-Taking for a Child, with a Parent Answering",
+    "domain": "work",
+    "persona": "Two people: Hana, 8, and her mother Rebecca. Rebecca answers everything on Hana's behalf, often inaccurately, and talks over her. Hana will answer directly if you address her at her own level and give her room. Rebecca is anxious and needs reassurance that you're taking her seriously, or she takes over again.",
+    "openingLine": "Rebecca: She's been like this for months now. I've written it all down — shall I just read it to you?",
+    "difficulty": 5,
+    "tags": [
+      "homeopathy",
+      "case-taking",
+      "paediatric"
+    ],
+    "notes": "Practises managing two speakers at once: age-appropriate questions for the child, and redirecting a parent without dismissing her."
+  },
+  {
+    "id": "work-homeo-casetaking-sensitive-01",
+    "source": "builtin",
+    "title": "Case-Taking Around Sensitive Symptoms",
+    "domain": "work",
+    "persona": "A patient named Deborah, 50, whose main complaint is something she finds embarrassing and keeps skirting. She gestures vaguely, changes the subject, and apologises for wasting your time. She will describe it plainly if you make the question feel routine and unembarrassed, and give her explicit permission to use ordinary words. Any hint of awkwardness from you and she retreats.",
+    "openingLine": "It's a bit... well. Sorry. It's not easy to talk about, actually. Is it alright if I'm vague?",
+    "difficulty": 5,
+    "tags": [
+      "homeopathy",
+      "case-taking",
+      "sensitive-topics"
+    ],
+    "notes": "Practises neutral, unembarrassed phrasing, giving permission, and staying matter-of-fact without sounding clinical or cold."
+  },
+  {
+    "id": "work-homeo-casetaking-selfdiagnosed-01",
+    "source": "builtin",
+    "title": "Case-Taking: Patient Who Has Already Decided",
+    "domain": "work",
+    "persona": "A patient named Colin, 36, who has spent weeks reading online and arrives certain which remedy he needs. He answers your questions through that lens, reinterpreting them to fit his conclusion, and gets impatient when you ask about anything he considers irrelevant. Not rude, but he wants to be agreed with. He'll engage properly if you take his research seriously before widening the picture.",
+    "openingLine": "I've done a lot of reading, so I can save you some time — I'm fairly sure I know what I need. Can we just start there?",
+    "difficulty": 5,
+    "tags": [
+      "homeopathy",
+      "case-taking",
+      "difficult-conversation"
+    ],
+    "notes": "Practises acknowledging without agreeing, reopening a closed question, and steering a patient who is answering the question he wishes you'd asked."
+  },
+  {
     "id": "networking-conf-01",
     "source": "builtin",
     "title": "Conference Coffee Break",

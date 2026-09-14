@@ -229,6 +229,18 @@ contains that track. The track tags are kept **disjoint** — a scenario carries
 at most one — so the chips partition the catalog rather than overlapping;
 `HomeopathyScenarioTests.trackTagsDoNotOverlap` enforces that.
 
+**The app icon is generated, not hand-drawn.** `swift scripts/make-app-icon.swift`
+renders every size into `build/AppIcon.iconset`, runs `iconutil`, and writes
+`Resources/AppIcon.icns` (committed — building the app doesn't need the
+generator). It also drops previews at 512/128/32pt in `build/` so small-size
+legibility can be checked rather than assumed. The brand gradient is duplicated
+there as literals because the script can't import `Theme`; the comment on those
+constants says so, and they must be changed together. `Info.plist` names
+`AppIcon` and `build-app.sh` fails if the file is missing — a bundle with no
+icon doesn't error, macOS just substitutes the generic placeholder, which is how
+this shipped unnoticed for so long. `AppIconTests` guards the artefact, its
+size ladder, and the plist keys.
+
 **Status labels must not move their own text.** `ActivityLabel` keeps the words
 outside its `TimelineView` and animates only three fixed-size dots by opacity.
 An earlier version animated the whole row and grew a "•" string from one dot to
@@ -277,6 +289,9 @@ the first turn.
   finds it, and `AppContainer.makeSTTProvider(settings:)` falls back to
   `UnconfiguredSTTProvider` when it's absent.
 - **Progress Dashboard** screen — deferred.
+- **The homeopathy track is now the largest** (10 of 21 scenarios), which makes
+  the All view lopsided. Fine while the chips exist, but worth revisiting if it
+  grows again.
 - **Medical scenarios sit in the `work` domain**, surfaced by the `medical` tag
   rather than a domain of their own — deliberate, but if the clinical track
   grows much further it probably wants its own `ScenarioDomain` case.

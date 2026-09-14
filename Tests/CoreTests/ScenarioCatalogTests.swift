@@ -128,3 +128,61 @@ import Testing
         #expect(secondaryTags.count >= 4, "only \(secondaryTags.count) distinct kinds")
     }
 }
+
+
+/// Case-taking is the core skill of a homeopathic consultation, so the track
+/// carries several of them at different levels of difficulty — each one a
+/// distinct language problem rather than the same interview again.
+@Suite struct HomeopathyCaseTakingTests {
+    private static func caseTaking() throws -> [Scenario] {
+        try ScenarioCatalog.loadBuiltIn()
+            .scenarios(withTag: "homeopathy")
+            .filter { $0.tags.contains("case-taking") }
+    }
+
+    @Test func severalCaseTakingScenariosExist() throws {
+        let scenarios = try Self.caseTaking()
+        #expect(scenarios.count >= 6, "only \(scenarios.count) case-taking scenarios")
+    }
+
+    /// The point of adding more was to add *harder* ones — a track where
+    /// everything sits at one level stops being useful once you've done it.
+    @Test func caseTakingReachesTheTopOfTheDifficultyRange() throws {
+        let levels = try Self.caseTaking().map(\.difficulty)
+        #expect(levels.contains { $0 >= 5 }, "nothing harder than \(levels.max() ?? 0)")
+        #expect(Set(levels).count >= 3, "difficulties collapse to \(Set(levels))")
+    }
+
+    /// Each scenario should drill a different thing. A shared secondary tag
+    /// across all of them would mean they're really one scenario five times.
+    @Test func eachCaseTakingScenarioDrillsSomethingDistinct() throws {
+        let scenarios = try Self.caseTaking()
+        let skills = scenarios.map { Set($0.tags).subtracting(["homeopathy", "case-taking"]) }
+        let allSkills = skills.reduce(into: Set<String>()) { $0.formUnion($1) }
+        #expect(allSkills.count >= 5, "only \(allSkills.count) distinct skills across \(scenarios.count)")
+        for (scenario, skill) in zip(scenarios, skills) {
+            #expect(!skill.isEmpty, "\(scenario.id) names no specific skill")
+        }
+    }
+
+    /// A hard scenario is hard because the persona pushes back in a specific
+    /// way, which takes more than a sentence to set up.
+    @Test func harderScenariosHaveRicherPersonas() throws {
+        for scenario in try Self.caseTaking() where scenario.difficulty >= 4 {
+            #expect(
+                scenario.persona.count > 200,
+                "\(scenario.id) persona is \(scenario.persona.count) chars — too thin for difficulty \(scenario.difficulty)"
+            )
+            #expect(scenario.notes?.isEmpty == false, "\(scenario.id) has no practice note")
+        }
+    }
+
+    @Test func caseTakingScenariosOpenInThePatientsVoice() throws {
+        for scenario in try Self.caseTaking() {
+            #expect(scenario.openingLine.count > 20, "\(scenario.id) opening line is thin")
+            // The AI speaks first, so the opening line must not be a stage
+            // direction or an instruction to the user.
+            #expect(!scenario.openingLine.hasPrefix("You "), "\(scenario.id) opens with an instruction")
+        }
+    }
+}

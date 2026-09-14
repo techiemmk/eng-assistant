@@ -18,6 +18,8 @@ xcuserdata/
 
 # Build artifacts
 EngAssistant.app/
+# Icon intermediates — Resources/AppIcon.icns is committed, these are not.
+build/
 
 # Brainstorming session scratch (visual companion mockups, etc.)
 .superpowers/

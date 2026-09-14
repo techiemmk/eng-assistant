@@ -12,8 +12,10 @@ public enum Theme {
     /// Display name shown in window titles, nav bars, and onboarding.
     public static let appName = "Jul EngAssistant"
 
-    /// SF Symbol used as the brand mark (onboarding hero + bootstrap error).
-    public static let appIconSymbol = "bubble.left.and.bubble.right.fill"
+    /// SF Symbol used as the brand mark (sidebar, launch screen, onboarding
+    /// hero, bootstrap error). A speech bubble holding a character, matching
+    /// the app icon: two generic chat bubbles said "messaging", not "language".
+    public static let appIconSymbol = "character.bubble.fill"
 
     // MARK: - Type scale
 
