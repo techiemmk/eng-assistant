@@ -73,7 +73,7 @@ public struct ContentView: View {
                 }
             case .session(let scenarioId, let mode, let resuming):
                 if let scenario = container.scenarioCatalog.scenario(id: scenarioId) {
-                    let vm = LiveSessionViewModel(
+                    LiveSessionView(viewModel: LiveSessionViewModel(
                         scenario: scenario,
                         mode: mode,
                         llm: container.makeLLMProvider(),
@@ -89,17 +89,13 @@ public struct ContentView: View {
                         // Only coach mode acts on these; flow mode never
                         // mentions them, so don't pay for the read.
                         activeWeakSpots: mode == .coach ? container.activeWeakSpots() : []
-                    )
-                    LiveSessionView(viewModel: vm) { sessionId in
+                    ), resuming: resuming) { sessionId in
                         selection = .debrief(sessionId: sessionId)
                     }
-                    .task {
-                        if let resuming {
-                            try? await vm.resume(sessionId: resuming)
-                        } else {
-                            try? await vm.start()
-                        }
-                    }
+                    // A new identity per session, so switching to a different
+                    // conversation gets a fresh view model instead of reusing
+                    // the previous one that @StateObject would otherwise keep.
+                    .id("\(scenarioId)|\(mode.rawValue)|\(resuming?.uuidString ?? "new")")
                 } else {
                     Text("Scenario not found")
                 }
@@ -121,6 +117,7 @@ public struct ContentView: View {
                     audioPlayback: container.makeAudioPlayback(),
                     audioRoot: container.storageLayout.rootDirectory
                 ))
+                .id(sessionId)
             case .history:
                 SessionsHistoryView(
                     viewModel: SessionsHistoryViewModel(

@@ -2,10 +2,10 @@ import SwiftUI
 import Core
 
 public struct DebriefView: View {
-    @ObservedObject var viewModel: DebriefViewModel
+    @StateObject private var viewModel: DebriefViewModel
 
-    public init(viewModel: DebriefViewModel) {
-        self.viewModel = viewModel
+    public init(viewModel: @autoclosure @escaping () -> DebriefViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel())
     }
 
     public var body: some View {

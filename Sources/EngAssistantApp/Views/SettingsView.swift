@@ -2,10 +2,16 @@ import SwiftUI
 import Core
 
 public struct SettingsView: View {
-    @ObservedObject var viewModel: SettingsViewModel
+    @StateObject private var viewModel: SettingsViewModel
 
-    public init(viewModel: SettingsViewModel) {
-        self.viewModel = viewModel
+    /// Autoclosed so `@StateObject` constructs the view model exactly once per
+    /// view identity. Built eagerly, it was rebuilt on every body evaluation —
+    /// and saving mutates the settings store, which *causes* one. The fresh
+    /// instance had empty model/voice lists and default selections, and the
+    /// `.task` below doesn't re-fire for a new object at the same identity, so
+    /// the screen blanked the moment you pressed Save.
+    public init(viewModel: @autoclosure @escaping () -> SettingsViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel())
     }
 
     public var body: some View {

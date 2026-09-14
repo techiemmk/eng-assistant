@@ -2,7 +2,7 @@ import SwiftUI
 import Core
 
 public struct SessionsHistoryView: View {
-    @ObservedObject var viewModel: SessionsHistoryViewModel
+    @StateObject private var viewModel: SessionsHistoryViewModel
     let onOpenDebrief: (UUID) -> Void
     let onContinue: (Session) -> Void
 
@@ -11,11 +11,11 @@ public struct SessionsHistoryView: View {
     @State private var pendingDeletion: Session?
 
     public init(
-        viewModel: SessionsHistoryViewModel,
+        viewModel: @autoclosure @escaping () -> SessionsHistoryViewModel,
         onOpenDebrief: @escaping (UUID) -> Void,
         onContinue: @escaping (Session) -> Void
     ) {
-        self.viewModel = viewModel
+        _viewModel = StateObject(wrappedValue: viewModel())
         self.onOpenDebrief = onOpenDebrief
         self.onContinue = onContinue
     }

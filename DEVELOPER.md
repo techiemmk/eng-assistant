@@ -300,6 +300,39 @@ first launch running migrations doesn't pay the hold on top of its own work. A
 bootstrap *failure* skips the hold entirely — no reason to make someone wait to
 read an error. The hold is injectable so tests don't sit through it.
 
+**Views own their view models; never build one inline in a parent's body.**
+Every screen's view model is `@StateObject` inside its own view, constructed
+through an `@autoclosure` so it is built exactly once per view identity.
+
+This was a real bug, not a style preference. `ContentView` used to construct
+each view model inline in its `body`. Saving in Settings mutates
+`AppSettingsStore`, which `ContentView` observes — so the save triggered a body
+evaluation, which built a *fresh* `SettingsViewModel` with empty model/voice
+lists and default fields. `SettingsView`'s `.task { load() }` does not re-fire
+for a new object at the same view identity, so nothing repopulated it: the
+screen showed "Ollama unreachable", "0 voices installed", and snapped the voice
+back to "System default" the instant you pressed Save. Changing the theme did
+the same thing, for the same reason. The values were persisted correctly
+throughout — only the display was wrong, which is what made it look like a save
+failure.
+
+Two consequences to respect when editing `ContentView`:
+
+- **Panes that take a parameter need an explicit `.id(...)`.** With
+  `@StateObject`, the same view identity keeps the same object, so switching
+  from one session to another would otherwise reuse the previous session's view
+  model. `LiveSessionView` is keyed on scenario+mode+resuming and `DebriefView`
+  on its session id.
+- **`LiveSessionView` starts itself.** The caller can no longer hold the view
+  model and call `start()` on it — that reference would be a different object
+  from the one on screen. It takes `resuming:` and does the start-or-resume in
+  its own `.task`.
+
+`SettingsViewModel` additionally seeds itself from the store at init, so a
+rebuilt instance is never blank even before `load()` completes.
+`SettingsPersistenceRegressionTests` covers that layer — verified to fail
+without it.
+
 **Voice selection, and what actually affects synthesised audio.** The engine
 takes a `Core.Voice`, and `AVSpeechTTS` has always honoured `voice.id` — but
 `LiveSessionViewModel` hardcoded `Voice(id: "default")`, which is not a real

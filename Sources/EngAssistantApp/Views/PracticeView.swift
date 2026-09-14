@@ -2,11 +2,14 @@ import SwiftUI
 import Core
 
 public struct PracticeView: View {
-    @ObservedObject var viewModel: PracticeViewModel
+    @StateObject private var viewModel: PracticeViewModel
     let onStart: (Scenario, SessionMode) -> Void
 
-    public init(viewModel: PracticeViewModel, onStart: @escaping (Scenario, SessionMode) -> Void) {
-        self.viewModel = viewModel
+    public init(
+        viewModel: @autoclosure @escaping () -> PracticeViewModel,
+        onStart: @escaping (Scenario, SessionMode) -> Void
+    ) {
+        _viewModel = StateObject(wrappedValue: viewModel())
         self.onStart = onStart
     }
 

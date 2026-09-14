@@ -55,6 +55,21 @@ public final class SettingsViewModel: ObservableObject {
         self.ollamaBaseURL = ollamaBaseURL
         self.voiceCatalog = voiceCatalog
         self.previewSpeaker = previewSpeaker
+
+        // Seed from the live store when there is one. `load()` is async, so
+        // without this a freshly-built view model shows defaults for a beat —
+        // and if it is built *instead of* being loaded, it shows them forever.
+        // That was the visible bug: saving rebuilt this object, and the screen
+        // fell back to "System default" and an empty model list.
+        if let store {
+            modelName = store.modelName
+            defaultMode = store.defaultMode
+            audioRetentionDays = store.audioRetentionDays
+            sttExecutablePath = store.sttExecutablePath
+            sttModelPath = store.sttModelPath
+            appearance = store.appearance
+            ttsVoiceId = store.ttsVoiceId
+        }
     }
 
     /// The rows to offer. A saved voice that is no longer installed still

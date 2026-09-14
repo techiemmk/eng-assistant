@@ -2,11 +2,21 @@ import SwiftUI
 import Core
 
 public struct LiveSessionView: View {
-    @ObservedObject var viewModel: LiveSessionViewModel
+    @StateObject private var viewModel: LiveSessionViewModel
+    /// The session to continue, or nil to open a fresh one. Held here rather
+    /// than started by the caller: the view owns its view model now, so a
+    /// caller-held reference would be a *different* object from the one on
+    /// screen and starting it would do nothing visible.
+    private let resuming: UUID?
     let onEnd: (UUID) -> Void
 
-    public init(viewModel: LiveSessionViewModel, onEnd: @escaping (UUID) -> Void) {
-        self.viewModel = viewModel
+    public init(
+        viewModel: @autoclosure @escaping () -> LiveSessionViewModel,
+        resuming: UUID? = nil,
+        onEnd: @escaping (UUID) -> Void
+    ) {
+        _viewModel = StateObject(wrappedValue: viewModel())
+        self.resuming = resuming
         self.onEnd = onEnd
     }
 
@@ -26,6 +36,13 @@ public struct LiveSessionView: View {
             controlBar
         }
         .frame(minWidth: 820, minHeight: 620)
+        .task {
+            if let resuming {
+                try? await viewModel.resume(sessionId: resuming)
+            } else {
+                try? await viewModel.start()
+            }
+        }
     }
 
     private var header: some View {
