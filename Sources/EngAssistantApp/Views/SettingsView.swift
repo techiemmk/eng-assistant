@@ -223,6 +223,10 @@ public struct SettingsView: View {
                         Label(n, systemImage: "checkmark.circle.fill")
                             .foregroundStyle(Theme.success)
                             .font(Theme.caption)
+                            // Fades rather than vanishing abruptly. The only
+                            // motion is the disappearance itself, which is the
+                            // information — nothing here moves while it's up.
+                            .transition(.opacity)
                     }
                     if let e = viewModel.lastError {
                         Label(e, systemImage: "exclamationmark.triangle.fill")
@@ -232,6 +236,7 @@ public struct SettingsView: View {
                 }
             }
             .formStyle(.grouped)
+            .animation(.easeInOut(duration: 0.25), value: viewModel.savedNotice)
         }
         .task { try? await viewModel.load() }
     }

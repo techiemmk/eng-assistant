@@ -300,6 +300,15 @@ first launch running migrations doesn't pay the hold on top of its own work. A
 bootstrap *failure* skips the hold entirely — no reason to make someone wait to
 read an error. The hold is injectable so tests don't sit through it.
 
+**Transient confirmations expire; errors don't.** `SettingsViewModel.savedNotice`
+("Saved.", and the autodetect result) clears itself after
+`defaultNoticeDuration` — 3s, injectable so tests don't wait. It previously sat
+there until the screen was rebuilt, so navigating away and back was the only way
+to dismiss it. `lastError` is deliberately excluded: an error is actionable and
+should stay until the user resolves it. The expiry task is cancelled when a new
+notice is shown, or a second save would inherit the first one's timer and vanish
+early.
+
 **Views own their view models; never build one inline in a parent's body.**
 Every screen's view model is `@StateObject` inside its own view, constructed
 through an `@autoclosure` so it is built exactly once per view identity.

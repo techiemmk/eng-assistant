@@ -17,6 +17,9 @@ public final class SettingsViewModel: ObservableObject {
     @Published public private(set) var availableVoices: [InstalledVoice] = []
     @Published public private(set) var isPreviewingVoice: Bool = false
 
+    /// A short-lived confirmation such as "Saved." It clears itself after
+    /// `noticeDuration`; it used to sit there until the screen was rebuilt,
+    /// which meant navigating away and back was the only way to dismiss it.
     @Published public private(set) var savedNotice: String? = nil
     @Published public private(set) var lastError: String? = nil
 
@@ -31,6 +34,14 @@ public final class SettingsViewModel: ObservableObject {
     private let healthCheck: HealthCheck
     private let ollamaBaseURL: URL
     /// Injected so tests don't depend on which voices this Mac happens to have.
+    /// How long a transient confirmation stays on screen before clearing
+    /// itself. Injectable so tests don't sit through it, matching
+    /// `AppState.launchHold` and `LiveSessionViewModel.endpointPollInterval`.
+    private let noticeDuration: Duration
+    /// Clears the current notice when it expires. Held so a second save can
+    /// cancel the first one's timer — otherwise an older timer would clear the
+    /// newer message early.
+    private var noticeExpiry: Task<Void, Never>?
     private let voiceCatalog: @Sendable () -> [InstalledVoice]
     /// Speaks a sample so the user can hear a voice before committing to it.
     private let previewSpeaker: @Sendable (Voice) async -> Void
@@ -45,6 +56,7 @@ public final class SettingsViewModel: ObservableObject {
         locator: STTLocator = STTLocator(),
         healthCheck: HealthCheck = HealthCheck(),
         ollamaBaseURL: URL = URL(string: "http://localhost:11434")!,
+        noticeDuration: Duration = SettingsViewModel.defaultNoticeDuration,
         voiceCatalog: @escaping @Sendable () -> [InstalledVoice] = { SystemVoiceCatalog.englishVoices() },
         previewSpeaker: @escaping @Sendable (Voice) async -> Void = SettingsViewModel.speakSample
     ) {
@@ -53,6 +65,7 @@ public final class SettingsViewModel: ObservableObject {
         self.locator = locator
         self.healthCheck = healthCheck
         self.ollamaBaseURL = ollamaBaseURL
+        self.noticeDuration = noticeDuration
         self.voiceCatalog = voiceCatalog
         self.previewSpeaker = previewSpeaker
 
@@ -193,7 +206,7 @@ public final class SettingsViewModel: ObservableObject {
                 appearance: appearance,
                 ttsVoiceId: ttsVoiceId
             )
-            savedNotice = "Saved."
+            showNotice("Saved.")
             lastError = nil
         } catch {
             lastError = "Save failed: \(error)"
@@ -211,6 +224,29 @@ public final class SettingsViewModel: ObservableObject {
         }
     }
 
+    /// Seconds a confirmation stays up. Long enough to read, short enough not
+    /// to look stuck.
+    public static let defaultNoticeDuration: Duration = .seconds(3)
+
+    /// Shows a confirmation and schedules its own removal. Errors deliberately
+    /// do *not* expire — they're actionable, so they stay until resolved.
+    private func showNotice(_ message: String) {
+        noticeExpiry?.cancel()
+        savedNotice = message
+        let duration = noticeDuration
+        noticeExpiry = Task { [weak self] in
+            try? await Task.sleep(for: duration)
+            guard !Task.isCancelled else { return }
+            self?.savedNotice = nil
+        }
+    }
+
+    private func clearNotice() {
+        noticeExpiry?.cancel()
+        noticeExpiry = nil
+        savedNotice = nil
+    }
+
     /// Re-probes the usual Homebrew locations and the app's models directory.
     public func autodetectSTT() {
         var found: [String] = []
@@ -222,9 +258,11 @@ public final class SettingsViewModel: ObservableObject {
             sttModelPath = model
             found.append("model file")
         }
-        savedNotice = found.isEmpty
-            ? nil
-            : "Found \(found.joined(separator: " and ")) — Save to apply."
+        if found.isEmpty {
+            clearNotice()
+        } else {
+            showNotice("Found \(found.joined(separator: " and ")) — Save to apply.")
+        }
         lastError = found.isEmpty
             ? "Couldn't find whisper-cli. Install it with `brew install whisper-cpp`, "
                 + "and put a ggml model in ~/Library/Application Support/EngAssistant/models/."
