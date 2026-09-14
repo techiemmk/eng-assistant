@@ -278,8 +278,10 @@ The **Sessions** list on the left keeps all your past conversations. Each row
 can be reopened, **continued** where you left off, or deleted.
 
 The **Settings** screen lets you switch between light and dark, choose which AI
-model to use from the ones you have installed, and decide how long recordings
-are kept.
+model to use from the ones you have installed, pick the **voice** the AI speaks
+in (with a *Hear it* button to try one before committing — see
+[Making the AI sound more human](#making-the-ai-sound-more-human-worth-2-minutes)),
+and decide how long recordings are kept.
 
 ---
 
